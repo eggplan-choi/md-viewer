@@ -38,7 +38,7 @@
       --toc-active-text: #2563eb;
       --toc-active-border: #2563eb;
       --book-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      --overlay-bg: rgba(15, 23, 42, 0.35);
+      --overlay-bg: rgba(15, 23, 42, 0.4);
     }
 
     :root[data-theme="sepia"] {
@@ -60,7 +60,7 @@
       --toc-active-text: #b45309;
       --toc-active-border: #b45309;
       --book-shadow: 0 4px 20px rgba(67, 52, 34, 0.12);
-      --overlay-bg: rgba(44, 34, 22, 0.35);
+      --overlay-bg: rgba(44, 34, 22, 0.4);
     }
 
     :root[data-theme="dark"] {
@@ -82,14 +82,14 @@
       --toc-active-text: #38bdf8;
       --toc-active-border: #38bdf8;
       --book-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-      --overlay-bg: rgba(0, 0, 0, 0.6);
+      --overlay-bg: rgba(0, 0, 0, 0.65);
     }
 
     :root {
       --font-size: 22px;
       --font-weight: 500;
       --font-family-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-      --sidebar-width: 380px;
+      --sidebar-width: 420px;
       --settings-width: 290px;
     }
 
@@ -118,7 +118,6 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* 상단 헤더 그리드 레이아웃 */
     header {
       position: fixed;
       top: 0;
@@ -178,17 +177,13 @@
       white-space: nowrap;
     }
 
-    .btn-nav-toggle:hover {
-      background: var(--border-color);
-    }
-
+    .btn-nav-toggle:hover { background: var(--border-color); }
     .btn-nav-toggle.active {
       background: var(--primary-color);
       color: #ffffff;
       border-color: var(--primary-color);
     }
 
-    /* 중앙 문서 제목 정렬 */
     .nav-center {
       display: flex;
       align-items: center;
@@ -224,17 +219,11 @@
       text-align: center;
     }
 
-    .nav-title-track.is-marquee .nav-title {
-      padding-right: 48px;
-    }
-
+    .nav-title-track.is-marquee .nav-title { padding-right: 48px; }
     .nav-title-track.is-marquee {
       animation: titleMarquee var(--marquee-duration, 14s) linear infinite;
     }
-
-    .nav-title-wrapper:hover .nav-title-track {
-      animation-play-state: paused;
-    }
+    .nav-title-wrapper:hover .nav-title-track { animation-play-state: paused; }
 
     @keyframes titleMarquee {
       0%, 15% { transform: translateX(0); }
@@ -248,7 +237,6 @@
       flex-shrink: 0;
     }
 
-    /* 모바일 오버레이 딤 처리 */
     #sidebar-overlay {
       position: fixed;
       top: 54px;
@@ -268,7 +256,6 @@
       visibility: visible;
     }
 
-    /* 좌측 통합 탐색 사이드바 */
     #sidebar {
       position: fixed;
       top: 54px;
@@ -299,6 +286,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
 
     .sidebar-header-title {
@@ -312,19 +300,21 @@
     .sidebar-body {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 8px 40px 8px;
+      padding: 12px 8px 60px 8px;
+      scroll-behavior: smooth;
     }
 
-    /* 폴더 트리 & 인셋 목차 스타일 */
     .tree-root {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 2px;
+      width: 100%;
     }
 
     .tree-folder {
       margin-bottom: 2px;
+      width: 100%;
     }
 
     .folder-header {
@@ -339,27 +329,18 @@
       font-weight: 600;
       color: var(--title-color);
       gap: 6px;
+      width: 100%;
     }
 
-    .folder-header:hover {
-      background: var(--card-bg);
-    }
-
-    .folder-icon {
-      font-size: 0.95rem;
-      flex-shrink: 0;
-    }
-
+    .folder-header:hover { background: var(--card-bg); }
+    .folder-icon { font-size: 0.95rem; flex-shrink: 0; }
     .folder-chevron {
       font-size: 0.7rem;
       color: var(--sub-color);
       margin-left: auto;
       transition: transform 0.2s ease;
     }
-
-    .folder-chevron.expanded {
-      transform: rotate(90deg);
-    }
+    .folder-chevron.expanded { transform: rotate(90deg); }
 
     .folder-children {
       display: none;
@@ -367,21 +348,20 @@
       flex-direction: column;
       gap: 2px;
       margin-top: 2px;
+      width: 100%;
     }
-
-    .folder-children.expanded {
-      display: flex;
-    }
+    .folder-children.expanded { display: flex; }
 
     .tree-file-node {
       display: flex;
       flex-direction: column;
+      width: 100%;
     }
 
     .tree-file-item {
       display: flex;
       align-items: center;
-      padding: 6px 8px;
+      padding: 6px 10px;
       border-radius: 6px;
       cursor: pointer;
       user-select: none;
@@ -393,6 +373,7 @@
       border-left: 3px solid transparent;
       transition: all 0.15s ease;
       word-break: keep-all;
+      box-sizing: border-box;
     }
 
     .tree-file-item:hover {
@@ -407,11 +388,7 @@
       border-left-color: var(--toc-active-border);
     }
 
-    .tree-file-icon {
-      font-size: 0.9rem;
-      flex-shrink: 0;
-    }
-
+    .tree-file-icon { font-size: 0.9rem; flex-shrink: 0; }
     .tree-file-title {
       flex: 1;
       min-width: 0;
@@ -420,9 +397,8 @@
       white-space: nowrap;
     }
 
-    /* 문서 구조 인셋 카드 (Selected File TOC Box) */
     .doc-toc-card {
-      margin: 4px 6px 8px 18px;
+      margin: 6px 8px 10px 8px;
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-left: 3px solid var(--primary-color);
@@ -430,6 +406,8 @@
       padding: 8px 10px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
       animation: tocSlideDown 0.2s ease-out;
+      box-sizing: border-box;
+      width: calc(100% - 16px);
     }
 
     @keyframes tocSlideDown {
@@ -479,7 +457,6 @@
       font-weight: 700;
     }
 
-    /* 우측 설정 사이드바 */
     #settings-sidebar {
       position: fixed;
       top: 54px;
@@ -512,12 +489,7 @@
       justify-content: space-between;
     }
 
-    .settings-header-title {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--title-color);
-    }
-
+    .settings-header-title { font-size: 0.85rem; font-weight: 700; color: var(--title-color); }
     .btn-panel-close {
       background: transparent;
       border: none;
@@ -538,12 +510,7 @@
       gap: 16px;
     }
 
-    .setting-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
+    .setting-group { display: flex; flex-direction: column; gap: 6px; }
     .setting-label {
       font-size: 0.78rem;
       font-weight: 700;
@@ -626,7 +593,6 @@
       cursor: pointer;
     }
 
-    /* 본문 영역 스타일 */
     h1 {
       font-size: 1.55em;
       line-height: 1.35;
@@ -663,7 +629,6 @@
       margin: 1.2em 0;
       border-radius: 0 8px 8px 0;
     }
-
     blockquote p { margin-bottom: 0; }
 
     .card {
@@ -705,7 +670,6 @@
       border-bottom: 1px solid var(--border-color);
       vertical-align: middle;
     }
-
     th:first-child, td:first-child { text-align: left; }
     th {
       font-weight: 700;
@@ -723,7 +687,7 @@
       width: 100%;
       margin-left: auto;
       margin-right: auto;
-      padding: 76px 20px 80px 20px;
+      padding: 76px 20px calc(50vh - 60px) 20px;
       transition: margin 0.25s ease, max-width 0.25s ease;
     }
 
@@ -738,6 +702,89 @@
         margin-left: calc(var(--sidebar-width) + (100% - var(--sidebar-width) - 860px) / 2);
         margin-right: auto;
       }
+    }
+
+    .doc-nav-wrapper {
+      margin-top: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      border-top: 1px solid var(--border-color);
+      padding-top: 28px;
+    }
+
+    .doc-nav-row {
+      display: flex;
+      width: 100%;
+    }
+    .doc-nav-row.prev-row { justify-content: flex-start; }
+    .doc-nav-row.next-row { justify-content: flex-end; }
+
+    .doc-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--title-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      max-width: 82%;
+      min-width: 220px;
+    }
+
+    .doc-nav-btn:hover:not(:disabled) {
+      border-color: var(--primary-color);
+      background: var(--card-bg);
+      color: var(--primary-color);
+    }
+
+    .doc-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .doc-nav-arrow {
+      font-size: 0.85rem;
+      color: var(--primary-color);
+      flex-shrink: 0;
+    }
+    .doc-nav-btn:disabled .doc-nav-arrow { color: var(--sub-color); }
+
+    .doc-nav-title-track {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .doc-nav-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+
+    .doc-nav-title-track.is-marquee {
+      animation: navMarquee var(--nav-duration, 12s) linear infinite;
+    }
+    .doc-nav-btn:hover .doc-nav-title-track.is-marquee {
+      animation-play-state: paused;
+    }
+
+    @keyframes navMarquee {
+      0%, 15% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
     }
 
     .view-paginated {
@@ -787,7 +834,6 @@
       to { opacity: 1; }
     }
 
-    /* 낱장 보기 전용 하단 플로팅 페이저 */
     .bottom-pager {
       display: none;
       position: fixed;
@@ -845,21 +891,14 @@
       opacity: 0;
     }
 
-    /* 모바일 반응형 최적화 */
     @media (max-width: 640px) {
-      header {
-        padding: 0 8px;
-        gap: 6px;
-      }
+      header { padding: 0 8px; gap: 6px; }
       .nav-toggle-text { display: none; }
-      .btn-nav-toggle {
-        padding: 6px 8px;
-        font-size: 0.95rem;
-      }
+      .btn-nav-toggle { padding: 6px 8px; font-size: 0.95rem; }
       .paged-sheet { padding: 20px 22px; }
       #hidden-measurer { padding: 20px 22px; }
       .view-scroll { padding-left: 14px; padding-right: 14px; }
-      .doc-toc-card { margin-left: 10px; }
+      .doc-nav-btn { max-width: 100%; min-width: 0; width: 100%; }
     }
 
     @media print {
@@ -871,10 +910,8 @@
         font-size: 11pt !important;
         line-height: 1.6 !important;
       }
-      body > *:not(#scroll-container) {
-        display: none !important;
-      }
-      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #bottom-pager, #hidden-measurer {
+      body > *:not(#scroll-container) { display: none !important; }
+      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #bottom-pager, #hidden-measurer, .doc-nav-wrapper {
         display: none !important;
       }
       #scroll-container {
@@ -1013,6 +1050,25 @@
         <p>왼쪽 상단의 <strong>[📁 열기]</strong> 버튼을 눌러 컴퓨터에 있는 마크다운(<code>.md</code>) 파일을 직접 열거나, <code>manifest.json</code>에 등록된 목록에서 문서를 선택하세요.</p>
       </div>
     </article>
+
+    <nav class="doc-nav-wrapper" id="doc-nav-wrapper" style="display: none;">
+      <div class="doc-nav-row prev-row">
+        <button class="doc-nav-btn" id="btn-doc-nav-prev" title="이전 문서">
+          <span class="doc-nav-arrow">◀</span>
+          <div class="doc-nav-title-track" id="doc-nav-prev-track">
+            <span class="doc-nav-title" id="doc-nav-prev-title">이전 문서</span>
+          </div>
+        </button>
+      </div>
+      <div class="doc-nav-row next-row">
+        <button class="doc-nav-btn" id="btn-doc-nav-next" title="다음 문서">
+          <div class="doc-nav-title-track" id="doc-nav-next-track">
+            <span class="doc-nav-title" id="doc-nav-next-title">다음 문서</span>
+          </div>
+          <span class="doc-nav-arrow">▶</span>
+        </button>
+      </div>
+    </nav>
   </main>
 
   <main class="view-paginated" id="paginated-container">
@@ -1071,6 +1127,12 @@
     const btnSettingsClose = document.getElementById('btn-settings-close');
     const localFileInput = document.getElementById('local-file-input');
 
+    const docNavWrapper = document.getElementById('doc-nav-wrapper');
+    const btnDocNavPrev = document.getElementById('btn-doc-nav-prev');
+    const btnDocNavNext = document.getElementById('btn-doc-nav-next');
+    const docNavPrevTrack = document.getElementById('doc-nav-prev-track');
+    const docNavNextTrack = document.getElementById('doc-nav-next-track');
+
     const katexConfig = {
       delimiters: [
         { left: '$$', right: '$$', display: true },
@@ -1090,7 +1152,6 @@
         .replace(/'/g, '&#39;');
     }
 
-    // 마크다운 파싱 및 KaTeX 수식 보존
     function parseMarkdownSafe(rawText) {
       const mathTokens = [];
       const codeTokens = [];
@@ -1208,12 +1269,20 @@
     }
 
     btnSidebarToggle.addEventListener('click', () => setSidebarOpen(!isSidebarOpen));
-    sidebarOverlay.addEventListener('click', () => setSidebarOpen(false));
+    sidebarOverlay.addEventListener('click', () => {
+      if (window.innerWidth < 1280) setSidebarOpen(false);
+    });
+
+    scrollContainer.addEventListener('click', () => {
+      if (window.innerWidth < 1280 && isSidebarOpen) {
+        setSidebarOpen(false);
+      }
+    });
+
     btnSettingsToggle.addEventListener('click', () => toggleSettings());
     btnSettingsClose.addEventListener('click', () => toggleSettings(false));
     btnPrintHeader.addEventListener('click', () => window.print());
 
-    // 파일 경로를 파싱하여 계층형 트리 객체 생성
     function buildFileTree(items) {
       const root = { id: '__root__', name: '', isFolder: true, children: {}, files: [] };
 
@@ -1241,7 +1310,6 @@
       return root;
     }
 
-    // 트리 UI 렌더링 (폴더 접기/펼치기 및 인셋 목차 포함)
     function renderTree() {
       const treeData = buildFileTree(manifestData);
       treeRoot.innerHTML = '';
@@ -1249,7 +1317,6 @@
       function renderFolderNode(folderNode, depth) {
         const fragment = document.createDocumentFragment();
 
-        // 하위 폴더들 렌더링
         Object.keys(folderNode.children).forEach(folderKey => {
           const subFolder = folderNode.children[folderKey];
           const isExpanded = openFolders.has(subFolder.id);
@@ -1285,7 +1352,6 @@
           fragment.appendChild(folderLi);
         });
 
-        // 해당 폴더의 파일들 렌더링
         folderNode.files.forEach(fileItem => {
           const isCurrent = (fileItem.id === currentChapterId);
           const fileLi = document.createElement('li');
@@ -1293,7 +1359,8 @@
 
           const fileA = document.createElement('a');
           fileA.className = `tree-file-item ${isCurrent ? 'active' : ''}`;
-          fileA.style.paddingLeft = `${depth * 14 + 8}px`;
+          fileA.style.marginLeft = `${depth * 14 + 8}px`;
+          fileA.style.width = `calc(100% - ${depth * 14 + 16}px)`;
           fileA.href = `#${fileItem.id}`;
           fileA.innerHTML = `
             <span class="tree-file-icon">${isCurrent ? '📘' : '📄'}</span>
@@ -1306,15 +1373,16 @@
               window.location.hash = fileItem.id;
               loadChapter(fileItem.id);
             }
+            if (window.innerWidth < 1280) {
+              setSidebarOpen(false);
+            }
           });
 
           fileLi.appendChild(fileA);
 
-          // 선택된 문서 아래에만 인셋 목차 카드 렌더링
           if (isCurrent && currentHeadings.length > 0) {
             const tocCard = document.createElement('div');
             tocCard.className = 'doc-toc-card';
-            tocCard.style.marginLeft = `${depth * 14 + 14}px`;
 
             const cardHeader = document.createElement('div');
             cardHeader.className = 'toc-card-header';
@@ -1342,7 +1410,7 @@
                   targetElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
 
-                if (window.innerWidth < 768) {
+                if (window.innerWidth < 1280) {
                   setSidebarOpen(false);
                 }
               });
@@ -1364,6 +1432,43 @@
       treeRoot.appendChild(renderFolderNode(treeData, 0));
     }
 
+    function scrollToActiveFile() {
+      requestAnimationFrame(() => {
+        const activeItem = sidebar.querySelector('.tree-file-item.active');
+        const sidebarBody = sidebar.querySelector('.sidebar-body');
+        if (!activeItem || !sidebarBody) return;
+
+        const itemRect = activeItem.getBoundingClientRect();
+        const bodyRect = sidebarBody.getBoundingClientRect();
+        const currentTopInBody = (itemRect.top - bodyRect.top) + sidebarBody.scrollTop;
+        const targetScrollTop = Math.max(0, currentTopInBody - 38);
+
+        sidebarBody.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+      });
+    }
+
+    function keepActiveTocItemVisible(activeItem) {
+      const sidebarBody = sidebar.querySelector('.sidebar-body');
+      if (!activeItem || !sidebarBody) return;
+
+      const itemRect = activeItem.getBoundingClientRect();
+      const bodyRect = sidebarBody.getBoundingClientRect();
+
+      const bottomThreshold = 70;
+      const topThreshold = 50;
+
+      if (itemRect.bottom > bodyRect.bottom - bottomThreshold) {
+        const delta = itemRect.bottom - (bodyRect.bottom - bottomThreshold);
+        sidebarBody.scrollBy({ top: delta + 28, behavior: 'smooth' });
+      } else if (itemRect.top < bodyRect.top + topThreshold) {
+        const delta = (bodyRect.top + topThreshold) - itemRect.top;
+        sidebarBody.scrollBy({ top: -(delta + 28), behavior: 'smooth' });
+      }
+    }
+
     let tocObserver = null;
     function extractHeadingsAndInitObserver() {
       if (tocObserver) tocObserver.disconnect();
@@ -1381,6 +1486,7 @@
       });
 
       renderTree();
+      scrollToActiveFile();
 
       tocObserver = new IntersectionObserver((entries) => {
         if (currentMode !== 'scroll') return;
@@ -1388,9 +1494,17 @@
           if (entry.isIntersecting) {
             const activeId = entry.target.id;
             const items = document.querySelectorAll('.toc-card-item');
+            let currentActiveTocLi = null;
+
             items.forEach(item => {
-              item.classList.toggle('active', item.dataset.targetId === activeId);
+              const isMatch = (item.dataset.targetId === activeId);
+              item.classList.toggle('active', isMatch);
+              if (isMatch) currentActiveTocLi = item;
             });
+
+            if (currentActiveTocLi) {
+              keepActiveTocItemVisible(currentActiveTocLi);
+            }
           }
         });
       }, {
@@ -1402,6 +1516,77 @@
       headings.forEach(h => tocObserver.observe(h));
     }
 
+    function setupButtonMarquee(trackEl, text) {
+      trackEl.classList.remove('is-marquee');
+      trackEl.innerHTML = '';
+      const span = document.createElement('span');
+      span.className = 'doc-nav-title';
+      span.textContent = text;
+      trackEl.appendChild(span);
+
+      requestAnimationFrame(() => {
+        const trackWidth = trackEl.clientWidth;
+        const textWidth = span.scrollWidth;
+        if (textWidth > trackWidth) {
+          span.style.paddingRight = '32px';
+          const clone = span.cloneNode(true);
+          trackEl.appendChild(clone);
+          const totalDist = textWidth + 32;
+          const duration = Math.max(7, totalDist / 35);
+          trackEl.style.setProperty('--nav-duration', `${duration}s`);
+          trackEl.classList.add('is-marquee');
+        }
+      });
+    }
+
+    function updateDocNavigationButtons() {
+      const curItem = manifestData.find(c => c.id === currentChapterId);
+      if (!curItem) {
+        docNavWrapper.style.display = 'none';
+        return;
+      }
+      docNavWrapper.style.display = 'flex';
+
+      const curPath = curItem.file || curItem.title || '';
+      const curFolder = curPath.includes('/') ? curPath.substring(0, curPath.lastIndexOf('/')) : '';
+
+      const siblings = manifestData.filter(item => {
+        const p = item.file || item.title || '';
+        const f = p.includes('/') ? p.substring(0, p.lastIndexOf('/')) : '';
+        return f === curFolder;
+      });
+
+      const curIdx = siblings.findIndex(item => item.id === currentChapterId);
+
+      if (curIdx > 0) {
+        const prevItem = siblings[curIdx - 1];
+        btnDocNavPrev.disabled = false;
+        setupButtonMarquee(docNavPrevTrack, prevItem.title);
+        btnDocNavPrev.onclick = () => {
+          window.location.hash = prevItem.id;
+          loadChapter(prevItem.id);
+        };
+      } else {
+        btnDocNavPrev.disabled = true;
+        setupButtonMarquee(docNavPrevTrack, '첫 번째 문서입니다');
+        btnDocNavPrev.onclick = null;
+      }
+
+      if (curIdx >= 0 && curIdx < siblings.length - 1) {
+        const nextItem = siblings[curIdx + 1];
+        btnDocNavNext.disabled = false;
+        setupButtonMarquee(docNavNextTrack, nextItem.title);
+        btnDocNavNext.onclick = () => {
+          window.location.hash = nextItem.id;
+          loadChapter(nextItem.id);
+        };
+      } else {
+        btnDocNavNext.disabled = true;
+        setupButtonMarquee(docNavNextTrack, '마지막 문서입니다');
+        btnDocNavNext.onclick = null;
+      }
+    }
+
     function renderContent(htmlString, titleText) {
       updateNavTitle(titleText);
       rawArticle.innerHTML = htmlString;
@@ -1411,6 +1596,7 @@
       }
 
       extractHeadingsAndInitObserver();
+      updateDocNavigationButtons();
 
       if (currentMode === 'single') {
         currentPageIndex = 0;
@@ -1421,7 +1607,6 @@
       }
     }
 
-    // 현재 활성화된 파일이 속한 모든 부모 폴더 자동 열기
     function autoExpandParentFolders(fileItem) {
       if (!fileItem || !fileItem.file) return;
       const parts = fileItem.file.split('/').filter(p => p.trim() !== '');
