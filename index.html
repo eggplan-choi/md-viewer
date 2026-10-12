@@ -713,6 +713,47 @@
       color: var(--text-color);
       outline: none;
       cursor: pointer;
+      transition: opacity 0.2s ease, border-color 0.2s ease;
+    }
+
+    .styled-select:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: var(--control-bg);
+    }
+
+    /* 설정 패널 하단 앱 버전 정보 카드 */
+    .app-info-card {
+      margin-top: 8px;
+      padding: 12px 14px;
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .app-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--sub-color);
+    }
+
+    .app-info-row strong {
+      color: var(--title-color);
+      font-weight: 600;
+    }
+
+    .badge-version {
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
     }
 
     h1 {
@@ -1085,7 +1126,7 @@
       </div>
 
       <div class="setting-group">
-        <label class="setting-label" for="margin-select">본문 여백</label>
+        <label class="setting-label" for="margin-select">본문 여백 (낱장 모드)</label>
         <select class="styled-select" id="margin-select">
           <option value="0.95">좁게 (본문 95%)</option>
           <option value="0.80" selected>보통 (본문 80%)</option>
@@ -1129,6 +1170,23 @@
           <button class="stepper-btn" id="btn-weight-inc" title="굵게">B+</button>
         </div>
       </div>
+
+      <div class="setting-group" style="margin-top: 6px;">
+        <div class="app-info-card">
+          <div class="app-info-row">
+            <span>제작자</span>
+            <strong>eggplan</strong>
+          </div>
+          <div class="app-info-row">
+            <span>최종 뷰어 업데이트</span>
+            <strong>2026.10.12</strong>
+          </div>
+          <div class="app-info-row">
+            <span>뷰어 버젼</span>
+            <span class="badge-version">1.0.0</span>
+          </div>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -1136,7 +1194,7 @@
     <article class="book-article" id="raw-article">
       <div class="card">
         <h3>문서를 불러올 준비가 되었습니다.</h3>
-        <p>왼쪽 상단의 <strong>[📁 열기]</strong> 버튼을 눌러 컴퓨터에 있는 마크다운(<code>.md</code>) 파일을 직접 열거나, <code>manifest.json</code>에 등록된 목록에서 문서를 선택하세요.</p>
+        <p>왼쪽 상단의 <strong>[📁 열기]</strong> 버튼을 눌러 컴퓨터에 있는 마크다운(<code>.md</code>) 파일을 직접 열거나, <code>manifest.json</code>에 등록된 목록에서 문서를 선택하세요[cite: 1].</p>
       </div>
     </article>
 
@@ -1245,6 +1303,20 @@
         .replace(/'/g, '&#39;');
     }
 
+    function syncMarginControlState() {
+      if (!marginSelect) return;
+      const isSingleMode = (currentMode === 'single');
+      marginSelect.disabled = !isSingleMode;
+
+      const formattedVal = Number(currentMarginRatio).toFixed(2);
+      if (Array.from(marginSelect.options).some(opt => opt.value === formattedVal)) {
+        marginSelect.value = formattedVal;
+      } else {
+        marginSelect.value = "0.80";
+        currentMarginRatio = 0.80;
+      }
+    }
+
     function saveViewerSettings() {
       try {
         const settings = {
@@ -1262,7 +1334,10 @@
     function loadViewerSettings() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
-        if (!raw) return;
+        if (!raw) {
+          syncMarginControlState();
+          return;
+        }
         const s = JSON.parse(raw);
 
         if (s.theme) {
@@ -1283,14 +1358,17 @@
           document.documentElement.style.setProperty('--font-family-body', s.fontFamily);
           if (fontSelect) fontSelect.value = s.fontFamily;
         }
-        if (s.marginRatio) {
+        if (typeof s.marginRatio === 'number') {
           currentMarginRatio = s.marginRatio;
-          if (marginSelect) marginSelect.value = String(s.marginRatio);
         }
         if (s.mode) {
           currentMode = s.mode;
         }
-      } catch (e) {}
+
+        syncMarginControlState();
+      } catch (e) {
+        syncMarginControlState();
+      }
     }
 
     function getStoredProgress() {
@@ -1691,7 +1769,6 @@
       }
     }
 
-    // 문서 구조 하이라이트 적용 및 패널 자동 스크롤
     function applyActiveHeading(targetId, shouldScrollPanel = false) {
       if (!targetId) return;
       currentActiveSecId = targetId;
@@ -1710,15 +1787,14 @@
       }
     }
 
-    // 위/아래 양방향 정밀 위치 판정 (Scroll-Coordinate 기반)
+    // 헤더(H2)가 화면 정중앙(50%)에 도달할 때 상/하 스크롤 양방향 동기화
     function updateActiveHeadingOnScroll() {
       if (currentMode !== 'scroll' || currentHeadings.length === 0) return;
 
       const headings = rawArticle.querySelectorAll('h2');
       if (headings.length === 0) return;
 
-      // 헤더 높이 54px + 여유 46px = 100px 기준선
-      const TRIGGER_OFFSET = 100;
+      const triggerLine = window.innerHeight * 0.5;
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
       const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
       const clientHeight = document.documentElement.clientHeight || window.innerHeight;
@@ -1726,20 +1802,17 @@
 
       let matchedHeading = null;
 
-      // 문서 맨 끝에 도달했을 경우 마지막 섹션 선택
       if (maxScroll > 0 && scrollTop >= maxScroll - 30) {
         matchedHeading = headings[headings.length - 1];
       } else {
-        // 기준선(100px)보다 위에 위치한 가장 마지막 헤딩 탐색 (위/아래 양방향 즉시 반영)
         for (let i = 0; i < headings.length; i++) {
           const rectTop = headings[i].getBoundingClientRect().top;
-          if (rectTop <= TRIGGER_OFFSET) {
+          if (rectTop <= triggerLine) {
             matchedHeading = headings[i];
           } else {
             break;
           }
         }
-        // 모든 헤딩이 기준선 아래에 있는 경우 첫 번째 섹션 선택
         if (!matchedHeading) {
           matchedHeading = headings[0];
         }
@@ -1944,6 +2017,7 @@
     function setViewMode(mode) {
       currentMode = mode;
       saveViewerSettings();
+      syncMarginControlState();
 
       if (mode === 'scroll') {
         btnModeScroll.classList.add('active');
