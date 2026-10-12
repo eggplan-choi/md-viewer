@@ -39,6 +39,7 @@
       --toc-active-border: #2563eb;
       --book-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       --overlay-bg: rgba(15, 23, 42, 0.4);
+      --modal-overlay-bg: rgba(15, 23, 42, 0.5);
     }
 
     :root[data-theme="sepia"] {
@@ -61,6 +62,7 @@
       --toc-active-border: #b45309;
       --book-shadow: 0 4px 20px rgba(67, 52, 34, 0.12);
       --overlay-bg: rgba(44, 34, 22, 0.4);
+      --modal-overlay-bg: rgba(44, 34, 22, 0.55);
     }
 
     :root[data-theme="dark"] {
@@ -83,6 +85,7 @@
       --toc-active-border: #38bdf8;
       --book-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
       --overlay-bg: rgba(0, 0, 0, 0.65);
+      --modal-overlay-bg: rgba(0, 0, 0, 0.7);
     }
 
     :root {
@@ -722,7 +725,7 @@
       background: var(--control-bg);
     }
 
-    /* 설정 패널 하단 앱 버전 정보 카드 */
+    /* 설정 패널 앱 정보 카드 */
     .app-info-card {
       margin-top: 8px;
       padding: 12px 14px;
@@ -754,6 +757,116 @@
       border-radius: 4px;
       font-size: 0.74rem;
       font-weight: 700;
+    }
+
+    /* 읽기 위치 확인 모달 팝업 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--modal-overlay-bg);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-box {
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 380px;
+      padding: 22px 20px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: modalPopUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPopUp {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--title-color);
+    }
+
+    .modal-desc {
+      font-size: 0.85rem;
+      color: var(--sub-color);
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+    .modal-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    .btn-modal-resume {
+      background: var(--primary-color);
+      color: #ffffff;
+      border: 1px solid var(--primary-color);
+    }
+
+    .btn-modal-resume:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-modal-resume.focused {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-modal-restart {
+      background: var(--control-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-modal-restart:hover {
+      background: var(--border-color);
+    }
+
+    .btn-modal-restart.focused {
+      box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.35);
+      border-color: var(--primary-color);
     }
 
     h1 {
@@ -1019,6 +1132,7 @@
       .doc-nav-btn { max-width: 100%; min-width: 0; width: 100%; }
       .pager-info { min-width: 44px; font-size: 0.74rem; }
       .pager-btn { padding: 2px 4px; font-size: 0.72rem; }
+      .modal-box { padding: 18px 16px; }
     }
 
     @media print {
@@ -1031,7 +1145,7 @@
         line-height: 1.6 !important;
       }
       body > *:not(#scroll-container) { display: none !important; }
-      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #hidden-measurer, .doc-nav-wrapper {
+      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #hidden-measurer, .doc-nav-wrapper, #resume-modal-overlay {
         display: none !important;
       }
       #scroll-container {
@@ -1190,6 +1304,21 @@
     </div>
   </aside>
 
+  <!-- 읽기 위치 복원 확인 팝업 모달 -->
+  <div id="resume-modal-overlay" class="modal-overlay" style="display: none;">
+    <div class="modal-box" id="resume-modal-box" role="dialog" aria-modal="true">
+      <div class="modal-header-row">
+        <span style="font-size: 1.15rem;">🔖</span>
+        <h4 class="modal-title">이전 읽던 위치 확인</h4>
+      </div>
+      <p class="modal-desc">이전에 읽던 위치부터 계속 읽으시겠습니까, 아니면 처음부터 다시 시작하시겠습니까?</p>
+      <div class="modal-btn-group">
+        <button class="modal-btn btn-modal-resume focused" id="btn-resume-continue">이어서 읽기</button>
+        <button class="modal-btn btn-modal-restart" id="btn-resume-restart">처음부터 읽기</button>
+      </div>
+    </div>
+  </div>
+
   <main class="view-scroll" id="scroll-container">
     <article class="book-article" id="raw-article">
       <div class="card">
@@ -1246,6 +1375,10 @@
     let currentActiveSecId = null;
     const openFolders = new Set();
 
+    // 팝업 모달 상태
+    let isResumeModalOpen = false;
+    let modalFocusedIndex = 0; // 0: 이어서 읽기, 1: 처음부터 읽기
+
     const scrollContainer = document.getElementById('scroll-container');
     const paginatedContainer = document.getElementById('paginated-container');
     const pageFrame = document.getElementById('page-frame');
@@ -1283,6 +1416,10 @@
     const themeSelect = document.getElementById('theme-select');
     const fontSelect = document.getElementById('font-select');
     const marginSelect = document.getElementById('margin-select');
+
+    const resumeModalOverlay = document.getElementById('resume-modal-overlay');
+    const btnResumeContinue = document.getElementById('btn-resume-continue');
+    const btnResumeRestart = document.getElementById('btn-resume-restart');
 
     const katexConfig = {
       delimiters: [
@@ -1400,6 +1537,76 @@
         localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
       } catch (e) {}
     }
+
+    function resetChapterProgress(chapterId) {
+      if (!chapterId) return;
+      try {
+        const progress = getStoredProgress();
+        if (progress.chapters && progress.chapters[chapterId]) {
+          progress.chapters[chapterId].scrollY = 0;
+          progress.chapters[chapterId].pageIdx = 0;
+          if (currentHeadings.length > 0) {
+            progress.chapters[chapterId].activeSecId = currentHeadings[0].id;
+          }
+          localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
+        }
+      } catch (e) {}
+    }
+
+    // 팝업 모달 제어 함수
+    function setModalFocus(index) {
+      modalFocusedIndex = index;
+      if (modalFocusedIndex === 0) {
+        btnResumeContinue.classList.add('focused');
+        btnResumeRestart.classList.remove('focused');
+        btnResumeContinue.focus();
+      } else {
+        btnResumeRestart.classList.add('focused');
+        btnResumeContinue.classList.remove('focused');
+        btnResumeRestart.focus();
+      }
+    }
+
+    function showResumeModal() {
+      isResumeModalOpen = true;
+      resumeModalOverlay.style.display = 'flex';
+      setModalFocus(0);
+    }
+
+    function closeResumeModal() {
+      if (!isResumeModalOpen) return;
+      isResumeModalOpen = false;
+      resumeModalOverlay.style.display = 'none';
+    }
+
+    function handleResumeContinue() {
+      closeResumeModal();
+    }
+
+    function handleResumeRestart() {
+      closeResumeModal();
+      resetChapterProgress(currentChapterId);
+
+      if (currentMode === 'single') {
+        currentPageIndex = 0;
+        showPage(0);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (currentHeadings.length > 0) {
+          applyActiveHeading(currentHeadings[0].id, true);
+        }
+      }
+    }
+
+    btnResumeContinue.addEventListener('click', handleResumeContinue);
+    btnResumeRestart.addEventListener('click', handleResumeRestart);
+
+    // 모바일 터치 및 배경 클릭 시 ESC 동작(팝업 닫고 유지)
+    resumeModalOverlay.addEventListener('click', (e) => {
+      if (e.target === resumeModalOverlay) {
+        closeResumeModal();
+      }
+    });
 
     function parseMarkdownSafe(rawText) {
       const mathTokens = [];
@@ -1787,7 +1994,6 @@
       }
     }
 
-    // 헤더(H2)가 화면 정중앙(50%)에 도달할 때 상/하 스크롤 양방향 동기화
     function updateActiveHeadingOnScroll() {
       if (currentMode !== 'scroll' || currentHeadings.length === 0) return;
 
@@ -1934,9 +2140,16 @@
       extractHeadingsAndInitObserver();
       updateDocNavigationButtons();
 
+      const hasSavedPosition = (currentMode === 'single')
+        ? (typeof chapterProgress.pageIdx === 'number' && chapterProgress.pageIdx > 0)
+        : (typeof chapterProgress.scrollY === 'number' && chapterProgress.scrollY > 100);
+
       if (currentMode === 'single') {
         currentPageIndex = (typeof chapterProgress.pageIdx === 'number') ? chapterProgress.pageIdx : 0;
         splitDocumentIntoPages();
+        if (hasSavedPosition) {
+          showResumeModal();
+        }
       } else {
         const savedScrollY = chapterProgress.scrollY || 0;
         setTimeout(() => {
@@ -1947,6 +2160,10 @@
             applyActiveHeading(currentActiveSecId, true);
           } else {
             updateActiveHeadingOnScroll();
+          }
+
+          if (hasSavedPosition) {
+            showResumeModal();
           }
         }, 60);
       }
@@ -2161,7 +2378,30 @@
     btnPagePrev.addEventListener('click', prevPage);
     btnPageNext.addEventListener('click', nextPage);
 
+    // 키보드 이벤트 (모달 열려있을 때 방향키/엔터/ESC 전용 처리)
     window.addEventListener('keydown', (e) => {
+      if (isResumeModalOpen) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          setModalFocus(0);
+          return;
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          setModalFocus(1);
+          return;
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (modalFocusedIndex === 0) handleResumeContinue();
+          else handleResumeRestart();
+          return;
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeResumeModal();
+          return;
+        }
+        return;
+      }
+
       if (e.key === 'Escape') {
         if (isSidebarOpen || isSettingsOpen) {
           e.preventDefault();
@@ -2170,6 +2410,7 @@
           return;
         }
       }
+
       if (currentMode !== 'single') return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') {
         e.preventDefault();
@@ -2181,6 +2422,7 @@
     });
 
     window.addEventListener('wheel', (e) => {
+      if (isResumeModalOpen) return;
       if (currentMode !== 'single') return;
       if (wheelCooldown) return;
 
