@@ -237,7 +237,6 @@
       100% { transform: translateX(-50%); }
     }
 
-    /* 상단 헤더 페이저 (낱장 보기 모드 전용) */
     .header-pager {
       display: none;
       align-items: center;
@@ -716,7 +715,6 @@
       cursor: pointer;
     }
 
-    /* 본문 스타일 */
     h1 {
       font-size: 1.55em;
       line-height: 1.35;
@@ -1180,12 +1178,14 @@
     let totalPageCount = 1;
     let wheelCooldown = false;
     let scrollSaveTimeout = null;
+    let scrollTicking = false;
 
     let isSidebarOpen = true;
     let isSettingsOpen = false;
     let manifestData = [];
     let currentChapterId = null;
     let currentHeadings = [];
+    let currentActiveSecId = null;
     const openFolders = new Set();
 
     const scrollContainer = document.getElementById('scroll-container');
@@ -1245,7 +1245,6 @@
         .replace(/'/g, '&#39;');
     }
 
-    // 설정 저장 및 복원
     function saveViewerSettings() {
       try {
         const settings = {
@@ -1294,7 +1293,6 @@
       } catch (e) {}
     }
 
-    // 열람 진행도(마지막 문서, 스크롤 위치, 낱장 페이지) 저장 및 복원
     function getStoredProgress() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY_PROGRESS);
@@ -1304,7 +1302,7 @@
       }
     }
 
-    function saveReadingProgress(chapterId, scrollY, pageIdx) {
+    function saveReadingProgress(chapterId, scrollY, pageIdx, activeSecId) {
       if (!chapterId) return;
       try {
         const progress = getStoredProgress();
@@ -1317,6 +1315,9 @@
         }
         if (typeof pageIdx === 'number') {
           progress.chapters[chapterId].pageIdx = pageIdx;
+        }
+        if (typeof activeSecId === 'string') {
+          progress.chapters[chapterId].activeSecId = activeSecId;
         }
         localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
       } catch (e) {}
@@ -1613,7 +1614,8 @@
 
             currentHeadings.forEach((h) => {
               const itemLi = document.createElement('li');
-              itemLi.className = 'toc-card-item';
+              const isSecActive = (h.id === currentActiveSecId);
+              itemLi.className = `toc-card-item ${isSecActive ? 'active' : ''}`;
               itemLi.dataset.targetId = h.id;
 
               const linkA = document.createElement('a');
@@ -1627,6 +1629,7 @@
                 const targetElem = document.getElementById(h.id);
                 if (targetElem) {
                   targetElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  applyActiveHeading(h.id, true);
                 }
 
                 if (window.innerWidth < 1280) {
@@ -1688,9 +1691,67 @@
       }
     }
 
-    let tocObserver = null;
+    // 문서 구조 하이라이트 적용 및 패널 자동 스크롤
+    function applyActiveHeading(targetId, shouldScrollPanel = false) {
+      if (!targetId) return;
+      currentActiveSecId = targetId;
+
+      const items = document.querySelectorAll('.toc-card-item');
+      let activeItemEl = null;
+
+      items.forEach(item => {
+        const isMatch = (item.dataset.targetId === targetId);
+        item.classList.toggle('active', isMatch);
+        if (isMatch) activeItemEl = item;
+      });
+
+      if (activeItemEl && shouldScrollPanel) {
+        keepActiveTocItemVisible(activeItemEl);
+      }
+    }
+
+    // 위/아래 양방향 정밀 위치 판정 (Scroll-Coordinate 기반)
+    function updateActiveHeadingOnScroll() {
+      if (currentMode !== 'scroll' || currentHeadings.length === 0) return;
+
+      const headings = rawArticle.querySelectorAll('h2');
+      if (headings.length === 0) return;
+
+      // 헤더 높이 54px + 여유 46px = 100px 기준선
+      const TRIGGER_OFFSET = 100;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight || window.innerHeight;
+      const maxScroll = scrollHeight - clientHeight;
+
+      let matchedHeading = null;
+
+      // 문서 맨 끝에 도달했을 경우 마지막 섹션 선택
+      if (maxScroll > 0 && scrollTop >= maxScroll - 30) {
+        matchedHeading = headings[headings.length - 1];
+      } else {
+        // 기준선(100px)보다 위에 위치한 가장 마지막 헤딩 탐색 (위/아래 양방향 즉시 반영)
+        for (let i = 0; i < headings.length; i++) {
+          const rectTop = headings[i].getBoundingClientRect().top;
+          if (rectTop <= TRIGGER_OFFSET) {
+            matchedHeading = headings[i];
+          } else {
+            break;
+          }
+        }
+        // 모든 헤딩이 기준선 아래에 있는 경우 첫 번째 섹션 선택
+        if (!matchedHeading) {
+          matchedHeading = headings[0];
+        }
+      }
+
+      if (matchedHeading && matchedHeading.id !== currentActiveSecId) {
+        applyActiveHeading(matchedHeading.id, true);
+        saveReadingProgress(currentChapterId, scrollTop, null, currentActiveSecId);
+      }
+    }
+
     function extractHeadingsAndInitObserver() {
-      if (tocObserver) tocObserver.disconnect();
       const headings = rawArticle.querySelectorAll('h2');
       currentHeadings = [];
 
@@ -1707,32 +1768,11 @@
       renderTree();
       scrollToActiveFile();
 
-      tocObserver = new IntersectionObserver((entries) => {
-        if (currentMode !== 'scroll') return;
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const activeId = entry.target.id;
-            const items = document.querySelectorAll('.toc-card-item');
-            let currentActiveTocLi = null;
-
-            items.forEach(item => {
-              const isMatch = (item.dataset.targetId === activeId);
-              item.classList.toggle('active', isMatch);
-              if (isMatch) currentActiveTocLi = item;
-            });
-
-            if (currentActiveTocLi) {
-              keepActiveTocItemVisible(currentActiveTocLi);
-            }
-          }
-        });
-      }, {
-        root: null,
-        rootMargin: '0px 0px -70% 0px',
-        threshold: 0
-      });
-
-      headings.forEach(h => tocObserver.observe(h));
+      if (currentActiveSecId) {
+        applyActiveHeading(currentActiveSecId, true);
+      } else if (currentHeadings.length > 0) {
+        applyActiveHeading(currentHeadings[0].id, false);
+      }
     }
 
     function setupButtonMarquee(trackEl, text) {
@@ -1814,11 +1854,12 @@
         renderMathInElement(rawArticle, katexConfig);
       }
 
-      extractHeadingsAndInitObserver();
-      updateDocNavigationButtons();
-
       const progress = getStoredProgress();
       const chapterProgress = (progress.chapters && progress.chapters[currentChapterId]) || {};
+      currentActiveSecId = chapterProgress.activeSecId || null;
+
+      extractHeadingsAndInitObserver();
+      updateDocNavigationButtons();
 
       if (currentMode === 'single') {
         currentPageIndex = (typeof chapterProgress.pageIdx === 'number') ? chapterProgress.pageIdx : 0;
@@ -1828,6 +1869,12 @@
         setTimeout(() => {
           window.scrollTo({ top: savedScrollY, behavior: 'instant' });
           updateScrollProgress();
+
+          if (currentActiveSecId) {
+            applyActiveHeading(currentActiveSecId, true);
+          } else {
+            updateActiveHeadingOnScroll();
+          }
         }, 60);
       }
     }
@@ -1847,7 +1894,7 @@
       currentChapterId = chapter.id;
       autoExpandParentFolders(chapter);
       updateSidebarPathHeader(chapter);
-      saveReadingProgress(currentChapterId, null, null);
+      saveReadingProgress(currentChapterId, null, null, null);
 
       try {
         const response = await fetch(chapter.file);
@@ -2026,7 +2073,7 @@
       btnPageNext.disabled = (currentPageIndex === totalPageCount - 1);
 
       progressBar.style.width = (((currentPageIndex + 1) / totalPageCount) * 100) + '%';
-      saveReadingProgress(currentChapterId, null, currentPageIndex);
+      saveReadingProgress(currentChapterId, null, currentPageIndex, currentActiveSecId);
     }
 
     function nextPage() {
@@ -2134,9 +2181,17 @@
       const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
       progressBar.style.width = Math.min(100, Math.max(0, progress)) + '%';
 
+      if (!scrollTicking) {
+        requestAnimationFrame(() => {
+          updateActiveHeadingOnScroll();
+          scrollTicking = false;
+        });
+        scrollTicking = true;
+      }
+
       clearTimeout(scrollSaveTimeout);
       scrollSaveTimeout = setTimeout(() => {
-        saveReadingProgress(currentChapterId, scrollTop, null);
+        saveReadingProgress(currentChapterId, scrollTop, null, currentActiveSecId);
       }, 150);
     }
     window.addEventListener('scroll', updateScrollProgress, { passive: true });
