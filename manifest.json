@@ -45,6 +45,11 @@
     "file": "docs/0-A-linear_algebra/0-A-9. 길이의 규칙을 바꾸다 — 부정부호 쌍선형형식과 부호수.md"
   },
   {
+    "id": "0-B-1",
+    "title": "0-B-1. 실수는 무엇을 보장하는가? — 상한에서 극한의 가능성으로",
+    "file": "docs/0-B-real_analysis/0-B-1. 실수는 무엇을 보장하는가 — 상한에서 극한의 가능성으로.md"
+  },
+  {
     "id": "0-B",
     "title": "0-B. 실해석학 — 극한과 변화의 구조",
     "file": "docs/0-B-real_analysis/0-B. 실해석학 집필 계획.md"
