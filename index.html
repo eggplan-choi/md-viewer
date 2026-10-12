@@ -1157,7 +1157,7 @@
       updateNavTitle(titleText);
       rawArticle.innerHTML = htmlString;
 
-      // 추가 안전망: HTML 문서 직접 로드 시에도 KaTeX 렌더링 보장
+      // HTML 문서 직접 로드 시에도 KaTeX 렌더링 보장
       if (window.renderMathInElement) {
         renderMathInElement(rawArticle, katexConfig);
       }
@@ -1228,10 +1228,17 @@
         const a = document.createElement('a');
         a.href = '#' + heading.id;
         a.textContent = heading.textContent.trim();
+        
+        // TOC 클릭 시 해시 변경 없이 부드럽게 점프
         a.addEventListener('click', (e) => {
+          e.preventDefault();
+
           if (currentMode === 'single') {
             setViewMode('scroll');
           }
+
+          heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
           if (window.innerWidth < 768) {
             toggleSidebar(activeTab);
           }
@@ -1267,7 +1274,7 @@
     }
 
     async function loadChapter(chapterId) {
-      const chapter = manifestData.find(c => c.id === chapterId) || manifestData[0];
+      const chapter = manifestData.find(c => c.id === chapterId);
       if (!chapter || chapter.isLocal) return;
 
       currentChapterId = chapter.id;
@@ -1301,7 +1308,11 @@
           const targetId = a.getAttribute('href').replace('#', '');
           const targetItem = manifestData.find(i => i.id === targetId);
           if (targetItem && !targetItem.isLocal) {
-            window.location.hash = targetId;
+            if (window.location.hash === '#' + targetId) {
+              loadChapter(targetId);
+            } else {
+              window.location.hash = targetId;
+            }
           }
           if (window.innerWidth < 768) {
             toggleSidebar(activeTab);
@@ -1329,14 +1340,18 @@
 
         window.addEventListener('hashchange', () => {
           const targetId = window.location.hash.replace('#', '');
-          if (targetId && targetId !== currentChapterId) {
+          if (!targetId) return;
+
+          const isManifestChapter = manifestData.some(c => c.id === targetId);
+          if (isManifestChapter && targetId !== currentChapterId) {
             loadChapter(targetId);
           }
         });
 
-        const initialId = window.location.hash.replace('#', '') || (manifestData[0] ? manifestData[0].id : null);
-        if (initialId) {
-          loadChapter(initialId);
+        const currentHash = window.location.hash.replace('#', '');
+        const initialChapter = manifestData.find(c => c.id === currentHash) || manifestData[0];
+        if (initialChapter) {
+          loadChapter(initialChapter.id);
         }
       } catch (err) {
         updateNavTitle('문서를 열어주세요');
