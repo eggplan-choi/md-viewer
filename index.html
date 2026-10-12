@@ -185,7 +185,6 @@
       border-color: var(--primary-color);
     }
 
-    /* 중앙 문서 제목 (여유 공간 확보 및 오버플로우 마키) */
     .nav-center {
       display: flex;
       align-items: center;
@@ -244,7 +243,7 @@
       flex-shrink: 0;
     }
 
-    /* 화면 오버레이 딤 */
+    /* 오버레이 */
     #sidebar-overlay {
       position: fixed;
       top: 54px;
@@ -264,7 +263,7 @@
       visibility: visible;
     }
 
-    /* 좌측 통합 탐색 사이드바 */
+    /* 좌측 탐색 사이드바 */
     #sidebar {
       position: fixed;
       top: 54px;
@@ -316,28 +315,35 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 10px 6px 60px 6px;
+      padding: 8px 0 60px 0;
       scroll-behavior: smooth;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .tree-root {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
       width: 100%;
+      padding: 0;
+      margin: 0;
     }
 
     .tree-folder {
-      margin-bottom: 2px;
+      margin-bottom: 1px;
       width: 100%;
+      padding: 0;
     }
 
     .folder-header {
       display: flex;
-      align-items: center;
-      padding: 6px 6px;
-      border-radius: 6px;
+      align-items: flex-start;
+      padding-top: 6px;
+      padding-bottom: 6px;
+      padding-right: 8px;
+      border-radius: 4px;
       cursor: pointer;
       user-select: none;
       transition: background-color 0.15s ease;
@@ -346,17 +352,38 @@
       color: var(--title-color);
       gap: 6px;
       width: 100%;
+      box-sizing: border-box;
     }
 
     .folder-header:hover { background: var(--card-bg); }
-    .folder-icon { font-size: 0.92rem; flex-shrink: 0; }
+
+    .tree-icon {
+      font-size: 0.95rem;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .folder-name {
+      flex: 1;
+      min-width: 0;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      line-height: 1.4;
+    }
+
     .folder-chevron {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       color: var(--sub-color);
-      margin-left: auto;
+      margin-left: 4px;
       transition: transform 0.2s ease;
       flex-shrink: 0;
-      padding-right: 4px;
+      margin-top: 4px;
     }
     .folder-chevron.expanded { transform: rotate(90deg); }
 
@@ -364,8 +391,9 @@
       display: none;
       list-style: none;
       flex-direction: column;
-      gap: 2px;
-      margin-top: 2px;
+      gap: 1px;
+      margin: 0;
+      padding: 0;
       width: 100%;
     }
     .folder-children.expanded { display: flex; }
@@ -374,13 +402,17 @@
       display: flex;
       flex-direction: column;
       width: 100%;
+      padding: 0;
+      margin: 0;
     }
 
     .tree-file-item {
       display: flex;
       align-items: flex-start;
-      padding: 6px 8px;
-      border-radius: 6px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+      padding-right: 8px;
+      border-radius: 4px;
       cursor: pointer;
       user-select: none;
       text-decoration: none;
@@ -390,10 +422,12 @@
       gap: 6px;
       border-left: 3px solid transparent;
       transition: all 0.15s ease;
-      word-break: keep-all;
-      overflow-wrap: break-word;
+      word-break: break-all;
+      overflow-wrap: anywhere;
       white-space: normal;
       box-sizing: border-box;
+      width: 100%;
+      margin: 0;
     }
 
     .tree-file-item:hover {
@@ -408,16 +442,16 @@
       border-left-color: var(--toc-active-border);
     }
 
-    .tree-file-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
     .tree-file-title {
       flex: 1;
       min-width: 0;
-      word-break: keep-all;
-      overflow-wrap: break-word;
+      word-break: break-all;
+      overflow-wrap: anywhere;
       white-space: normal;
+      line-height: 1.4;
     }
 
-    /* 문서 구조 인셋 카드 (패널 좌측 기준 마진 최소화 & 자동 줄바꿈) */
+    /* 문서 구조 인셋 카드 (패널 좌우 폭 100% 활용) */
     .doc-toc-card {
       margin: 6px 4px 10px 4px;
       background: var(--card-bg);
@@ -453,6 +487,8 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
+      padding: 0;
+      margin: 0;
     }
 
     .toc-card-item a {
@@ -464,8 +500,8 @@
       text-decoration: none;
       border-radius: 4px;
       transition: all 0.12s ease;
-      word-break: keep-all;
-      overflow-wrap: break-word;
+      word-break: break-all;
+      overflow-wrap: anywhere;
       white-space: normal;
     }
 
@@ -480,7 +516,7 @@
       font-weight: 700;
     }
 
-    /* 우측 설정 사이드바 */
+    /* 설정 사이드바 */
     #settings-sidebar {
       position: fixed;
       top: 54px;
@@ -729,7 +765,7 @@
       }
     }
 
-    /* 본문 하단 이전/다음 문서 네비게이션 버튼 */
+    /* 이전/다음 문서 네비게이션 버튼 */
     .doc-nav-wrapper {
       margin-top: 56px;
       display: flex;
@@ -1305,7 +1341,6 @@
 
     btnSidebarToggle.addEventListener('click', () => setSidebarOpen(!isSidebarOpen));
     
-    // 모바일 터치 및 클릭 시 양쪽 패널 모두 닫기
     function closePanelsOnMobileTouch() {
       if (window.innerWidth < 1280) {
         if (isSidebarOpen) setSidebarOpen(false);
@@ -1368,9 +1403,11 @@
       }
     }
 
+    // 트리 렌더링 (아이콘 크기 기준 16px 들여쓰기, 동일 층위 시작선 일치, 전체 폭 인셋 박스)
     function renderTree() {
       const treeData = buildFileTree(manifestData);
       treeRoot.innerHTML = '';
+      const INDENT_STEP = 16;
 
       function renderFolderNode(folderNode, depth) {
         const fragment = document.createDocumentFragment();
@@ -1384,11 +1421,11 @@
 
           const headerDiv = document.createElement('div');
           headerDiv.className = 'folder-header';
-          headerDiv.style.paddingLeft = `${depth * 8 + 6}px`;
+          headerDiv.style.paddingLeft = `${depth * INDENT_STEP + 8}px`;
 
           headerDiv.innerHTML = `
-            <span class="folder-icon">${isExpanded ? '📂' : '📁'}</span>
-            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(subFolder.name)}</span>
+            <span class="tree-icon">${isExpanded ? '📂' : '📁'}</span>
+            <span class="folder-name">${escapeHtml(subFolder.name)}</span>
             <span class="folder-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
           `;
 
@@ -1417,11 +1454,10 @@
 
           const fileA = document.createElement('a');
           fileA.className = `tree-file-item ${isCurrent ? 'active' : ''}`;
-          fileA.style.marginLeft = `${depth * 8 + 4}px`;
-          fileA.style.width = `calc(100% - ${depth * 8 + 8}px)`;
+          fileA.style.paddingLeft = `${depth * INDENT_STEP + 8}px`;
           fileA.href = `#${fileItem.id}`;
           fileA.innerHTML = `
-            <span class="tree-file-icon">${isCurrent ? '📘' : '📄'}</span>
+            <span class="tree-icon">${isCurrent ? '📘' : '📄'}</span>
             <span class="tree-file-title">${escapeHtml(fileItem.title)}</span>
           `;
 
@@ -1438,7 +1474,7 @@
 
           fileLi.appendChild(fileA);
 
-          // 인셋 목차 카드 (화면 왼쪽에서 약간의 마진만 주고 넓게 표시)
+          // 인셋 목차 카드: 패널 전체 좌우 폭(좌우 4px 여백) 활용
           if (isCurrent && currentHeadings.length > 0) {
             const tocCard = document.createElement('div');
             tocCard.className = 'doc-toc-card';
