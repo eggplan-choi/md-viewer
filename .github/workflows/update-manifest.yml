@@ -3,20 +3,20 @@ name: Auto Update Manifest
 on:
   push:
     paths:
-      - 'chapters/**'   # chapters 폴더 내 파일 변경 시에만 실행
+      - 'docs/**'       # docs 폴더 내 마크다운 추가/수정 시 실행
     branches:
-      - main           # 기본 브랜치명 (master인 경우 변경 필요)
+      - main           # 기본 브랜치 (master를 쓰시면 master로 변경)
 
 jobs:
   update-manifest:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # 저장소 자동 커밋을 위한 쓰기 권한
+      contents: write   # 커밋 및 푸시 권한
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
 
-      - name: 파이썬 환경 설정
+      - name: Python 환경 설정
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
