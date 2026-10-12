@@ -192,6 +192,7 @@
       overflow: hidden;
       height: 100%;
       padding: 0 6px;
+      gap: 8px;
     }
 
     .nav-title-wrapper {
@@ -202,6 +203,7 @@
       align-items: center;
       justify-content: center;
       padding: 0 4px;
+      min-width: 0;
     }
 
     .nav-title-wrapper.is-overflowing {
@@ -233,6 +235,51 @@
     @keyframes titleMarquee {
       0%, 15% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
+    }
+
+    /* 상단 헤더 페이저 (낱장 보기 모드 전용) */
+    .header-pager {
+      display: none;
+      align-items: center;
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2px 6px;
+      gap: 2px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .header-pager.active {
+      display: inline-flex;
+    }
+
+    .pager-btn {
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-color);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+
+    .pager-btn:hover:not(:disabled) { background: var(--border-color); }
+    .pager-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .pager-info {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--title-color);
+      min-width: 52px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
     }
 
     .nav-right {
@@ -284,7 +331,6 @@
       pointer-events: none;
     }
 
-    /* 상단 브레드크럼 폴더 위치 표시 헤더 */
     .sidebar-header {
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
@@ -371,7 +417,6 @@
       padding: 0;
     }
 
-    /* 폴더와 문서의 공통 레이아웃 (정렬 및 여백 일치) */
     .folder-header,
     .tree-file-item {
       display: flex;
@@ -471,7 +516,6 @@
       margin: 0;
     }
 
-    /* 문서 구조 인셋 카드 (선택된 파일과 좌측 굵은 선 4px 위치 일치) */
     .doc-toc-card {
       margin: 4px 4px 8px 4px;
       background: var(--card-bg);
@@ -536,7 +580,6 @@
       font-weight: 700;
     }
 
-    /* 설정 사이드바 */
     #settings-sidebar {
       position: fixed;
       top: 54px;
@@ -915,51 +958,6 @@
       to { opacity: 1; }
     }
 
-    .bottom-pager {
-      display: none;
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--header-bg);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--border-color);
-      border-radius: 30px;
-      padding: 4px 12px;
-      gap: 10px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-      z-index: 500;
-      align-items: center;
-    }
-
-    .pager-btn {
-      background: transparent;
-      border: none;
-      border-radius: 12px;
-      padding: 4px 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text-color);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.12s ease;
-      user-select: none;
-    }
-
-    .pager-btn:hover:not(:disabled) { background: var(--control-bg); }
-    .pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .pager-info {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--title-color);
-      min-width: 65px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
-
     #hidden-measurer {
       position: fixed;
       top: 0;
@@ -980,6 +978,8 @@
       #hidden-measurer { padding: 20px 22px; }
       .view-scroll { padding-left: 14px; padding-right: 14px; }
       .doc-nav-btn { max-width: 100%; min-width: 0; width: 100%; }
+      .pager-info { min-width: 44px; font-size: 0.74rem; }
+      .pager-btn { padding: 2px 4px; font-size: 0.72rem; }
     }
 
     @media print {
@@ -992,7 +992,7 @@
         line-height: 1.6 !important;
       }
       body > *:not(#scroll-container) { display: none !important; }
-      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #bottom-pager, #hidden-measurer, .doc-nav-wrapper {
+      header, #progress-container, #sidebar, #sidebar-overlay, #settings-sidebar, #paginated-container, #hidden-measurer, .doc-nav-wrapper {
         display: none !important;
       }
       #scroll-container {
@@ -1033,6 +1033,11 @@
         <div class="nav-title-track" id="nav-title-track">
           <span class="nav-title" id="nav-doc-title">문서를 선택하거나 파일을 여세요</span>
         </div>
+      </div>
+      <div class="header-pager" id="header-pager">
+        <button class="pager-btn" id="btn-page-prev" title="이전 페이지">◀</button>
+        <span class="pager-info" id="page-info-display">1 / 1</span>
+        <button class="pager-btn" id="btn-page-next" title="다음 페이지">▶</button>
       </div>
     </div>
 
@@ -1161,15 +1166,12 @@
     <div class="page-sheet-frame" id="page-frame"></div>
   </main>
 
-  <div class="bottom-pager" id="bottom-pager">
-    <button class="pager-btn" id="btn-page-prev" title="이전 페이지">◀</button>
-    <span class="pager-info" id="page-info-display">1 / 1</span>
-    <button class="pager-btn" id="btn-page-next" title="다음 페이지">▶</button>
-  </div>
-
   <div id="hidden-measurer"></div>
 
   <script>
+    const STORAGE_KEY_SETTINGS = 'webbook_viewer_settings';
+    const STORAGE_KEY_PROGRESS = 'webbook_viewer_progress';
+
     let currentFontSize = 22;
     let currentFontWeight = 500;
     let currentMode = 'scroll';
@@ -1177,6 +1179,7 @@
     let currentPageIndex = 0;
     let totalPageCount = 1;
     let wheelCooldown = false;
+    let scrollSaveTimeout = null;
 
     let isSidebarOpen = true;
     let isSettingsOpen = false;
@@ -1190,7 +1193,7 @@
     const pageFrame = document.getElementById('page-frame');
     const hiddenMeasurer = document.getElementById('hidden-measurer');
     const rawArticle = document.getElementById('raw-article');
-    const bottomPager = document.getElementById('bottom-pager');
+    const headerPager = document.getElementById('header-pager');
     const pageInfoDisplay = document.getElementById('page-info-display');
     const btnPagePrev = document.getElementById('btn-page-prev');
     const btnPageNext = document.getElementById('btn-page-next');
@@ -1219,6 +1222,10 @@
     const docNavPrevTrack = document.getElementById('doc-nav-prev-track');
     const docNavNextTrack = document.getElementById('doc-nav-next-track');
 
+    const themeSelect = document.getElementById('theme-select');
+    const fontSelect = document.getElementById('font-select');
+    const marginSelect = document.getElementById('margin-select');
+
     const katexConfig = {
       delimiters: [
         { left: '$$', right: '$$', display: true },
@@ -1236,6 +1243,83 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    // 설정 저장 및 복원
+    function saveViewerSettings() {
+      try {
+        const settings = {
+          theme: document.documentElement.getAttribute('data-theme') || 'light',
+          fontSize: currentFontSize,
+          fontWeight: currentFontWeight,
+          fontFamily: document.documentElement.style.getPropertyValue('--font-family-body') || "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif",
+          marginRatio: currentMarginRatio,
+          mode: currentMode
+        };
+        localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      } catch (e) {}
+    }
+
+    function loadViewerSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+
+        if (s.theme) {
+          document.documentElement.setAttribute('data-theme', s.theme);
+          if (themeSelect) themeSelect.value = s.theme;
+        }
+        if (s.fontSize) {
+          currentFontSize = Math.min(36, Math.max(16, s.fontSize));
+          document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
+          fontSizeDisplay.textContent = currentFontSize + 'px';
+        }
+        if (s.fontWeight) {
+          currentFontWeight = s.fontWeight;
+          document.documentElement.style.setProperty('--font-weight', currentFontWeight);
+          fontWeightDisplay.textContent = currentFontWeight;
+        }
+        if (s.fontFamily) {
+          document.documentElement.style.setProperty('--font-family-body', s.fontFamily);
+          if (fontSelect) fontSelect.value = s.fontFamily;
+        }
+        if (s.marginRatio) {
+          currentMarginRatio = s.marginRatio;
+          if (marginSelect) marginSelect.value = String(s.marginRatio);
+        }
+        if (s.mode) {
+          currentMode = s.mode;
+        }
+      } catch (e) {}
+    }
+
+    // 열람 진행도(마지막 문서, 스크롤 위치, 낱장 페이지) 저장 및 복원
+    function getStoredProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_PROGRESS);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveReadingProgress(chapterId, scrollY, pageIdx) {
+      if (!chapterId) return;
+      try {
+        const progress = getStoredProgress();
+        progress.lastChapterId = chapterId;
+        if (!progress.chapters) progress.chapters = {};
+        if (!progress.chapters[chapterId]) progress.chapters[chapterId] = {};
+
+        if (typeof scrollY === 'number') {
+          progress.chapters[chapterId].scrollY = scrollY;
+        }
+        if (typeof pageIdx === 'number') {
+          progress.chapters[chapterId].pageIdx = pageIdx;
+        }
+        localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
+      } catch (e) {}
     }
 
     function parseMarkdownSafe(rawText) {
@@ -1363,7 +1447,7 @@
     }
 
     btnSidebarToggle.addEventListener('click', () => setSidebarOpen(!isSidebarOpen));
-    
+
     function closePanelsOnMobileTouch() {
       if (window.innerWidth < 1280) {
         if (isSidebarOpen) setSidebarOpen(false);
@@ -1406,7 +1490,6 @@
       return root;
     }
 
-    // 상단 브레드크럼 박스(Badge) 헤더 업데이트
     function updateSidebarPathHeader(currentFileItem) {
       const container = document.getElementById('path-badges-container');
       if (!container) return;
@@ -1446,7 +1529,6 @@
       });
     }
 
-    // 트리 렌더링 (동일 층위 완벽 일치 & 선택 문서/문서구조 좌측 4px 파란선 정렬)
     function renderTree() {
       const treeData = buildFileTree(manifestData);
       treeRoot.innerHTML = '';
@@ -1517,7 +1599,6 @@
 
           fileLi.appendChild(fileA);
 
-          // 인셋 목차 카드: 패널 좌측 4px 위치에서 파란 테두리가 시작되어 선택된 문서와 동일 수직선상에 정렬
           if (isCurrent && currentHeadings.length > 0) {
             const tocCard = document.createElement('div');
             tocCard.className = 'doc-toc-card';
@@ -1736,12 +1817,18 @@
       extractHeadingsAndInitObserver();
       updateDocNavigationButtons();
 
+      const progress = getStoredProgress();
+      const chapterProgress = (progress.chapters && progress.chapters[currentChapterId]) || {};
+
       if (currentMode === 'single') {
-        currentPageIndex = 0;
+        currentPageIndex = (typeof chapterProgress.pageIdx === 'number') ? chapterProgress.pageIdx : 0;
         splitDocumentIntoPages();
       } else {
-        window.scrollTo(0, 0);
-        updateScrollProgress();
+        const savedScrollY = chapterProgress.scrollY || 0;
+        setTimeout(() => {
+          window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+          updateScrollProgress();
+        }, 60);
       }
     }
 
@@ -1760,6 +1847,7 @@
       currentChapterId = chapter.id;
       autoExpandParentFolders(chapter);
       updateSidebarPathHeader(chapter);
+      saveReadingProgress(currentChapterId, null, null);
 
       try {
         const response = await fetch(chapter.file);
@@ -1808,12 +1896,14 @@
 
     function setViewMode(mode) {
       currentMode = mode;
+      saveViewerSettings();
+
       if (mode === 'scroll') {
         btnModeScroll.classList.add('active');
         btnModeSingle.classList.remove('active');
         scrollContainer.style.display = 'block';
         paginatedContainer.style.display = 'none';
-        bottomPager.style.display = 'none';
+        headerPager.classList.remove('active');
         if (isSidebarOpen && window.innerWidth >= 1280) {
           document.body.classList.add('has-sidebar-open');
         }
@@ -1823,10 +1913,9 @@
         btnModeScroll.classList.remove('active');
         scrollContainer.style.display = 'none';
         paginatedContainer.style.display = 'flex';
-        bottomPager.style.display = 'flex';
+        headerPager.classList.add('active');
         setSidebarOpen(false);
         toggleSettings(false);
-        currentPageIndex = 0;
         splitDocumentIntoPages();
       }
     }
@@ -1911,6 +2000,7 @@
 
       totalPageCount = generatedPages.length || 1;
       if (currentPageIndex >= totalPageCount) currentPageIndex = totalPageCount - 1;
+      if (currentPageIndex < 0) currentPageIndex = 0;
       showPage(currentPageIndex);
     }
 
@@ -1936,6 +2026,7 @@
       btnPageNext.disabled = (currentPageIndex === totalPageCount - 1);
 
       progressBar.style.width = (((currentPageIndex + 1) / totalPageCount) * 100) + '%';
+      saveReadingProgress(currentChapterId, null, currentPageIndex);
     }
 
     function nextPage() {
@@ -1992,8 +2083,9 @@
       }
     });
 
-    document.getElementById('margin-select').addEventListener('change', (e) => {
+    marginSelect.addEventListener('change', (e) => {
       currentMarginRatio = parseFloat(e.target.value);
+      saveViewerSettings();
       if (currentMode === 'single') splitDocumentIntoPages();
     });
 
@@ -2001,6 +2093,7 @@
       currentFontSize = Math.min(36, Math.max(16, size));
       document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
       fontSizeDisplay.textContent = currentFontSize + 'px';
+      saveViewerSettings();
       if (currentMode === 'single') splitDocumentIntoPages();
     }
     document.getElementById('btn-font-inc').addEventListener('click', () => updateFontSize(currentFontSize + 1));
@@ -2015,18 +2108,21 @@
       currentFontWeight = weightSteps[idx];
       document.documentElement.style.setProperty('--font-weight', currentFontWeight);
       fontWeightDisplay.textContent = currentFontWeight;
+      saveViewerSettings();
       if (currentMode === 'single') splitDocumentIntoPages();
     }
     document.getElementById('btn-weight-inc').addEventListener('click', () => updateFontWeight('inc'));
     document.getElementById('btn-weight-dec').addEventListener('click', () => updateFontWeight('dec'));
 
-    document.getElementById('font-select').addEventListener('change', (e) => {
+    fontSelect.addEventListener('change', (e) => {
       document.documentElement.style.setProperty('--font-family-body', e.target.value);
+      saveViewerSettings();
       if (currentMode === 'single') splitDocumentIntoPages();
     });
 
-    document.getElementById('theme-select').addEventListener('change', (e) => {
+    themeSelect.addEventListener('change', (e) => {
       document.documentElement.setAttribute('data-theme', e.target.value);
+      saveViewerSettings();
     });
 
     function updateScrollProgress() {
@@ -2037,16 +2133,24 @@
       const maxScroll = scrollHeight - clientHeight;
       const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
       progressBar.style.width = Math.min(100, Math.max(0, progress)) + '%';
+
+      clearTimeout(scrollSaveTimeout);
+      scrollSaveTimeout = setTimeout(() => {
+        saveReadingProgress(currentChapterId, scrollTop, null);
+      }, 150);
     }
     window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
     async function init() {
+      loadViewerSettings();
+
       if (window.innerWidth < 1280) {
         setSidebarOpen(false);
       } else {
         setSidebarOpen(true);
       }
 
+      setViewMode(currentMode);
       updateNavTitle(navDocTitle.textContent);
 
       try {
@@ -2064,8 +2168,11 @@
           }
         });
 
+        const storedProgress = getStoredProgress();
         const currentHash = window.location.hash.replace('#', '');
-        const initialChapter = manifestData.find(c => c.id === currentHash) || manifestData[0];
+        const targetChapterId = currentHash || storedProgress.lastChapterId;
+        const initialChapter = manifestData.find(c => c.id === targetChapterId) || manifestData[0];
+
         if (initialChapter) {
           autoExpandParentFolders(initialChapter);
           loadChapter(initialChapter.id);
