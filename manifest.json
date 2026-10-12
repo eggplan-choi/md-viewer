@@ -1,0 +1,47 @@
+[
+  {
+    "id": "0-A-1",
+    "title": "0-A-1. 벡터라는 말을 다시 생각하다",
+    "file": "docs/0-A-linear_algebra/0-A-1. 벡터라는 말을 다시 생각하다.md"
+  },
+  {
+    "id": "0-A-2",
+    "title": "0-A-2. 공간의 뼈대를 찾아서 — 선형독립, 기저, 차원",
+    "file": "docs/0-A-linear_algebra/0-A-2. 공간의 뼈대를 찾아서 — 선형독립, 기저, 차원.md"
+  },
+  {
+    "id": "0-A-3",
+    "title": "0-A-3. 공간을 움직이는 규칙 — 선형사상, 핵, 상, Rank–Nullity",
+    "file": "docs/0-A-linear_algebra/0-A-3. 공간을 움직이는 규칙_ 선형사상, 핵, 상, Rank–Nullity.md"
+  },
+  {
+    "id": "0-A-4",
+    "title": "0-A-4. 선형사상을 기록하는 언어 — 행렬과 기저변환",
+    "file": "docs/0-A-linear_algebra/0-A-4. 선형사상을 기록하는 언어 — 행렬과 기저변환.md"
+  },
+  {
+    "id": "0-A-5",
+    "title": "0-A-5. 벡터를 읽는 새로운 공간 — 쌍대공간",
+    "file": "docs/0-A-linear_algebra/0-A-5. 벡터를 읽는 새로운 공간 — 쌍대공간.md"
+  },
+  {
+    "id": "0-A-6",
+    "title": "0-A-6. 벡터 두 개를 재는 규칙 — 쌍선형형식과 이차형식",
+    "file": "docs/0-A-linear_algebra/0-A-6. 벡터 두 개를 재는 규칙 — 쌍선형형식과 이차형식.md"
+  },
+  {
+    "id": "0-A-7",
+    "title": "0-A-7. 내적과 노름 — 길이와 각도를 만드는 규칙",
+    "file": "docs/0-A-linear_algebra/0-A-7. 내적과 노름 — 길이와 각도를 만드는 규칙.md"
+  },
+  {
+    "id": "0-A-8",
+    "title": "0-A-8. 특별한 방향을 찾다 — 고윳값과 대각화",
+    "file": "docs/0-A-linear_algebra/0-A-8. 특별한 방향을 찾다 — 고윳값과 대각화.md"
+  },
+  {
+    "id": "0-A-9",
+    "title": "0-A-9. 길이의 규칙을 바꾸다 — 부정부호 쌍선형형식과 부호수",
+    "file": "docs/0-A-linear_algebra/0-A-9. 길이의 규칙을 바꾸다 — 부정부호 쌍선형형식과 부호수.md"
+  }
+]
