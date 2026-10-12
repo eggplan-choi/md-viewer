@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>웹북 뷰어</title>
+
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Marked (마크다운 파서) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+
+  <!-- 웹 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Serif+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root[data-theme="light"] {
+      --bg-color: #f8fafc;
+      --header-bg: rgba(255, 255, 255, 0.96);
+      --sidebar-bg: #ffffff;
+      --paper-bg: #ffffff;
+      --text-color: #1e293b;
+      --title-color: #0f172a;
+      --sub-color: #475569;
+      --primary-color: #2563eb;
+      --border-color: #e2e8f0;
+      --card-bg: #f8fafc;
+      --quote-bg: #f1f5f9;
+      --badge-bg: #dbeafe;
+      --badge-text: #1e40af;
+      --control-bg: #f1f5f9;
+      --toc-active-bg: #eff6ff;
+      --toc-active-text: #2563eb;
+      --toc-active-border: #2563eb;
+      --book-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    :root[data-theme="sepia"] {
+      --bg-color: #ede4ce;
+      --header-bg: rgba(246, 238, 222, 0.96);
+      --sidebar-bg: #f7edd7;
+      --paper-bg: #fbf0d9;
+      --text-color: #433422;
+      --title-color: #2c2216;
+      --sub-color: #5c4730;
+      --primary-color: #b45309;
+      --border-color: #d8c8a8;
+      --card-bg: #f5e7c8;
+      --quote-bg: #f5e7c8;
+      --badge-bg: #eeddb7;
+      --badge-text: #78350f;
+      --control-bg: #eeddb7;
+      --toc-active-bg: #eeddb7;
+      --toc-active-text: #b45309;
+      --toc-active-border: #b45309;
+      --book-shadow: 0 4px 20px rgba(67, 52, 34, 0.12);
+    }
+
+    :root[data-theme="dark"] {
+      --bg-color: #0b0f19;
+      --header-bg: rgba(15, 23, 42, 0.96);
+      --sidebar-bg: #0f172a;
+      --paper-bg: #1e293b;
+      --text-color: #cbd5e1;
+      --title-color: #f8fafc;
+      --sub-color: #94a3b8;
+      --primary-color: #38bdf8;
+      --border-color: #334155;
+      --card-bg: #0f172a;
+      --quote-bg: #0f172a;
+      --badge-bg: #1e3a8a;
+      --badge-text: #93c5fd;
+      --control-bg: #0f172a;
+      --toc-active-bg: rgba(56, 189, 248, 0.15);
+      --toc-active-text: #38bdf8;
+      --toc-active-border: #38bdf8;
+      --book-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    :root {
+      --font-size: 22px;
+      --font-weight: 500;
+      --font-family-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      --sidebar-width: 310px;
+      --settings-width: 290px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      width: 100%;
+      max-width: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-family-body);
+      font-size: var(--font-size);
+      font-weight: var(--font-weight);
+      line-height: 1.85;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-width: 100%;
+      background: var(--header-bg);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1000;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    #progress-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--primary-color);
+      transition: width 0.1s ease;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-nav-toggle {
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .btn-nav-toggle:hover {
+      background: var(--border-color);
+    }
+
+    .btn-nav-toggle.active {
+      background: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+    }
+
+    .nav-title-wrapper {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-left: 6px;
+      mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    }
+
+    .nav-title-track {
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      will-change: transform;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--title-color);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .nav-title-track.is-marquee .nav-title {
+      padding-right: 48px;
+    }
+
+    .nav-title-track.is-marquee {
+      animation: titleMarquee var(--marquee-duration, 12s) linear infinite;
+    }
+
+    .nav-title-wrapper:hover .nav-title-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes titleMarquee {
+      0%, 15% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .center-pager {
+      display: none;
+      align-items: center;
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2px 8px;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .pager-btn {
+      background: transparent;
+      border: none;
+      border-radius: 12px;
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+
+    .pager-btn:hover:not(:disabled) {
+      background: var(--border-color);
+    }
+
+    .pager-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .pager-info {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--title-color);
+      min-width: 65px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 54px;
+      bottom: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      max-width: 85vw;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 900;
+      visibility: visible;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+    }
+
+    #sidebar.collapsed {
+      transform: translateX(-100%);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--control-bg);
+    }
+
+    .sidebar-tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--sub-color);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-tab-btn:hover { color: var(--title-color); }
+    .sidebar-tab-btn.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      background: var(--sidebar-bg);
+    }
+
+    .sidebar-panels {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px 40px 14px;
+    }
+
+    .sidebar-panel { display: none; }
+    .sidebar-panel.active { display: block; }
+
+    .panel-header-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--sub-color);
+      margin-bottom: 12px;
+      padding-left: 6px;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .toc-item a {
+      display: block;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      color: var(--text-color);
+      text-decoration: none;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      word-break: keep-all;
+    }
+
+    .toc-item a:hover {
+      background: var(--card-bg);
+      color: var(--primary-color);
+    }
+
+    .toc-item.active a {
+      background: var(--toc-active-bg);
+      color: var(--toc-active-text);
+      font-weight: 700;
+      border-left-color: var(--toc-active-border);
+    }
+
+    #settings-sidebar {
+      position: fixed;
+      top: 54px;
+      bottom: 0;
+      right: 0;
+      width: var(--settings-width);
+      max-width: 85vw;
+      background: var(--sidebar-bg);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 900;
+      box-shadow: -4px 0 16px rgba(0, 0, 0, 0.05);
+      visibility: visible;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+    }
+
+    #settings-sidebar.collapsed {
+      transform: translateX(100%);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .settings-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--control-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .settings-header-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--title-color);
+    }
+
+    .btn-panel-close {
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      color: var(--sub-color);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-panel-close:hover { background: var(--border-color); }
+
+    .settings-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 16px 40px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .setting-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--sub-color);
+      letter-spacing: 0.02em;
+    }
+
+    .segmented-control {
+      display: flex;
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .segmented-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-color);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+
+    .segmented-btn.active {
+      background: var(--primary-color);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .stepper-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--control-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+
+    .stepper-btn {
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      width: 32px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .stepper-btn:hover { background: var(--border-color); }
+
+    .stepper-value {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--title-color);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .styled-select {
+      width: 100%;
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 7px 8px;
+      font-size: 0.82rem;
+      color: var(--text-color);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-action {
+      width: 100%;
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-action:hover { background: var(--border-color); }
+
+    h1 {
+      font-size: 1.55em;
+      line-height: 1.35;
+      margin-bottom: 0.6em;
+      color: var(--title-color);
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: 1.25em;
+      margin-top: 1.4em;
+      margin-bottom: 0.6em;
+      color: var(--title-color);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 6px;
+      scroll-margin-top: 72px;
+    }
+
+    p {
+      margin-bottom: 0.9em;
+      text-align: justify;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    ul, ol { margin: 0.8em 0 1em 1.4em; }
+    li { margin-bottom: 0.4em; }
+
+    blockquote {
+      border-left: 4px solid var(--primary-color);
+      background-color: var(--quote-bg);
+      color: var(--sub-color);
+      padding: 12px 18px;
+      margin: 1.2em 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    blockquote p {
+      margin-bottom: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 1.2em 0;
+    }
+
+    .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      padding: 8px 0;
+      margin: 1em 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .katex {
+      max-width: 100%;
+    }
+    pre, code, table {
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .view-scroll {
+      display: block;
+      max-width: 860px;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 76px 20px 80px 20px;
+      transition: margin 0.25s ease, max-width 0.25s ease;
+    }
+
+    .book-article {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    @media (min-width: 1280px) {
+      body.has-sidebar-open .view-scroll {
+        margin-left: calc(var(--sidebar-width) + (100% - var(--sidebar-width) - 860px) / 2);
+        margin-right: auto;
+      }
+    }
+
+    .view-paginated {
+      display: none;
+      position: fixed;
+      top: 54px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .page-sheet-frame {
+      height: 100%;
+      max-height: calc(100vh - 76px);
+      background: var(--paper-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--book-shadow);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.15s ease;
+    }
+
+    .paged-sheet {
+      width: 100%;
+      height: 100%;
+      padding: 30px 36px;
+      box-sizing: border-box;
+      display: none;
+      overflow: hidden;
+    }
+
+    .paged-sheet.active {
+      display: block !important;
+      animation: sheetFade 0.15s ease-in-out;
+    }
+
+    @keyframes sheetFade {
+      from { opacity: 0.7; }
+      to { opacity: 1; }
+    }
+
+    #hidden-measurer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      visibility: hidden;
+      pointer-events: none;
+      box-sizing: border-box;
+      padding: 30px 36px;
+      z-index: -9999;
+      opacity: 0;
+    }
+
+    @media (max-width: 640px) {
+      .nav-toggle-text { display: none; }
+      .btn-nav-toggle { padding: 5px 8px; font-size: 0.9rem; }
+      .paged-sheet { padding: 20px 22px; }
+      #hidden-measurer { padding: 20px 22px; }
+      .view-scroll { padding-left: 14px; padding-right: 14px; }
+    }
+
+    @media print {
+      html, body {
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt !important;
+        line-height: 1.6 !important;
+      }
+      header, #progress-container, .nav-center, .nav-right, #sidebar, #settings-sidebar, #paginated-container, #hidden-measurer {
+        display: none !important;
+      }
+      #scroll-container {
+        display: block !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ccc !important;
+        background: #ffffff !important;
+      }
+      h1, h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="has-sidebar-open">
+
+  <header>
+    <div class="nav-left">
+      <div class="nav-btn-group">
+        <button class="btn-nav-toggle active" id="btn-file-toggle" title="목록 열기/닫기">
+          <span>📚</span> <span class="nav-toggle-text">목록</span>
+        </button>
+        <button class="btn-nav-toggle" id="btn-toc-toggle" title="구조(H2) 열기/닫기">
+          <span>📑</span> <span class="nav-toggle-text">구조</span>
+        </button>
+        <button class="btn-nav-toggle" id="btn-open-file" title="로컬 마크다운(.md) 열기">
+          <span>📁</span> <span class="nav-toggle-text">열기</span>
+        </button>
+        <input type="file" id="local-file-input" accept=".md,.markdown,.txt,.html" style="display: none;">
+      </div>
+
+      <div class="nav-title-wrapper" id="nav-title-wrapper">
+        <div class="nav-title-track" id="nav-title-track">
+          <span class="nav-title" id="nav-doc-title">문서를 선택하거나 파일을 여세요</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-center">
+      <div class="center-pager" id="center-pager">
+        <button class="pager-btn" id="btn-page-prev" title="이전 페이지">◀</button>
+        <span class="pager-info" id="page-info-display">1 / 1</span>
+        <button class="pager-btn" id="btn-page-next" title="다음 페이지">▶</button>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <button class="btn-nav-toggle" id="btn-settings-toggle" title="환경설정 열기/닫기">
+        <span>⚙️</span> <span class="nav-toggle-text">설정</span>
+      </button>
+    </div>
+
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+  </header>
+
+  <aside id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab-btn active" id="tab-btn-files">파일 목록</button>
+      <button class="sidebar-tab-btn" id="tab-btn-toc">문서 구조</button>
+    </div>
+
+    <div class="sidebar-panels">
+      <section class="sidebar-panel active" id="panel-files">
+        <div class="panel-header-title">문서 목록 (Files)</div>
+        <ul class="toc-list" id="file-list"></ul>
+      </section>
+
+      <section class="sidebar-panel" id="panel-toc">
+        <div class="panel-header-title">문서 구조 (Sections)</div>
+        <ul class="toc-list" id="toc-list"></ul>
+      </section>
+    </div>
+  </aside>
+
+  <aside id="settings-sidebar" class="collapsed">
+    <div class="settings-header">
+      <span class="settings-header-title">⚙️ 뷰어 설정</span>
+      <button class="btn-panel-close" id="btn-settings-close" title="닫기">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <div class="setting-group">
+        <label class="setting-label">보기 모드</label>
+        <div class="segmented-control">
+          <button class="segmented-btn active" id="btn-mode-scroll">📜 웹 스크롤</button>
+          <button class="segmented-btn" id="btn-mode-single">📖 화면 맞춤 낱장</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="margin-select">본문 여백</label>
+        <select class="styled-select" id="margin-select">
+          <option value="0.95">좁게 (본문 95%)</option>
+          <option value="0.80" selected>보통 (본문 80%)</option>
+          <option value="0.65">넓게 (본문 65%)</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="theme-select">화면 테마</label>
+        <select class="styled-select" id="theme-select">
+          <option value="light">☀️ 라이트 모드</option>
+          <option value="sepia">📜 세피아 모드</option>
+          <option value="dark">🌙 다크 모드</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="font-select">본문 글꼴</label>
+        <select class="styled-select" id="font-select">
+          <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif">고딕 (기본 Sans)</option>
+          <option value="'Noto Serif KR', serif">본명조 (Serif)</option>
+          <option value="'Nanum Myeongjo', serif">나눔명조</option>
+          <option value="'Malgun Gothic', sans-serif">맑은 고딕</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">글자 크기</label>
+        <div class="stepper-control">
+          <button class="stepper-btn" id="btn-font-dec" title="작게">A-</button>
+          <span class="stepper-value" id="font-size-display">22px</span>
+          <button class="stepper-btn" id="btn-font-inc" title="크게">A+</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">글자 굵기</label>
+        <div class="stepper-control">
+          <button class="stepper-btn" id="btn-weight-dec" title="얇게">B-</button>
+          <span class="stepper-value" id="font-weight-display">500</span>
+          <button class="stepper-btn" id="btn-weight-inc" title="굵게">B+</button>
+        </div>
+      </div>
+
+      <div class="setting-group" style="margin-top: 6px;">
+        <button class="btn-action" id="btn-print">
+          <span>🖨️</span> <span>인쇄 / PDF 저장</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="view-scroll" id="scroll-container">
+    <article class="book-article" id="raw-article">
+      <div class="card">
+        <h3>문서를 불러올 준비가 되었습니다.</h3>
+        <p>왼쪽 상단의 <strong>[📁 열기]</strong> 버튼을 눌러 컴퓨터에 있는 마크다운(<code>.md</code>) 파일을 직접 열거나, <code>manifest.json</code>에 등록된 목록에서 문서를 선택하세요.</p>
+      </div>
+    </article>
+  </main>
+
+  <main class="view-paginated" id="paginated-container">
+    <div class="page-sheet-frame" id="page-frame"></div>
+  </main>
+
+  <div id="hidden-measurer"></div>
+
+  <script>
+    let currentFontSize = 22;
+    let currentFontWeight = 500;
+    let currentMode = 'scroll';
+    let currentMarginRatio = 0.80;
+    let currentPageIndex = 0;
+    let totalPageCount = 1;
+    let wheelCooldown = false;
+
+    let isSidebarOpen = true;
+    let isSettingsOpen = false;
+    let activeTab = 'files';
+    let manifestData = [];
+    let currentChapterId = null;
+
+    const scrollContainer = document.getElementById('scroll-container');
+    const paginatedContainer = document.getElementById('paginated-container');
+    const pageFrame = document.getElementById('page-frame');
+    const hiddenMeasurer = document.getElementById('hidden-measurer');
+    const rawArticle = document.getElementById('raw-article');
+    const centerPager = document.getElementById('center-pager');
+    const pageInfoDisplay = document.getElementById('page-info-display');
+    const btnPagePrev = document.getElementById('btn-page-prev');
+    const btnPageNext = document.getElementById('btn-page-next');
+    const progressBar = document.getElementById('progress-bar');
+    const fontSizeDisplay = document.getElementById('font-size-display');
+    const fontWeightDisplay = document.getElementById('font-weight-display');
+    const sidebar = document.getElementById('sidebar');
+    const settingsSidebar = document.getElementById('settings-sidebar');
+
+    const navTitleWrapper = document.getElementById('nav-title-wrapper');
+    const navTitleTrack = document.getElementById('nav-title-track');
+    let navDocTitle = document.getElementById('nav-doc-title');
+
+    const btnFileToggle = document.getElementById('btn-file-toggle');
+    const btnTocToggle = document.getElementById('btn-toc-toggle');
+    const btnOpenFile = document.getElementById('btn-open-file');
+    const btnSettingsToggle = document.getElementById('btn-settings-toggle');
+    const btnSettingsClose = document.getElementById('btn-settings-close');
+    const localFileInput = document.getElementById('local-file-input');
+    const tabBtnFiles = document.getElementById('tab-btn-files');
+    const tabBtnToc = document.getElementById('tab-btn-toc');
+    const panelFiles = document.getElementById('panel-files');
+    const panelToc = document.getElementById('panel-toc');
+    const fileListEl = document.getElementById('file-list');
+    const tocListEl = document.getElementById('toc-list');
+
+    // KaTeX 수식 구분자 설정 (표준 LaTeX 구분자 포함)
+    const katexConfig = {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      throwOnError: false
+    };
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // 마크다운 파싱 전 수식 보호 및 KaTeX 사전 렌더링 파이프라인
+    function parseMarkdownSafe(rawText) {
+      const mathTokens = [];
+      const codeTokens = [];
+
+      // 1. 코드 블록(```...``` 및 `...`) 내부 수식 기호 보호
+      let text = rawText.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+        const token = `@@CODE_TOKEN_${codeTokens.length}@@`;
+        codeTokens.push(match);
+        return token;
+      });
+
+      // 2. 블록 수식($$...$$ 및 [...]) 추출 및 플레이스홀더 치환
+      text = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g, (match) => {
+        let content = '';
+        if (match.startsWith('$$')) {
+          content = match.slice(2, -2).trim();
+        } else if (match.startsWith('\\[')) {
+          content = match.slice(2, -2).trim();
+        }
+        const token = `@@MATH_BLOCK_${mathTokens.length}@@`;
+        mathTokens.push({ content, display: true });
+        return `\n\n${token}\n\n`;
+      });
+
+      // 3. 인라인 수식(\(...\) 및 $...$) 추출 및 플레이스홀더 치환
+      text = text.replace(/(\\\([\s\S]*?\\\)|\$([^\$\s](?:[^\$\n]*?[^\$\s])?)\$|\$([^\$\s])\$)/g, (match) => {
+        let content = '';
+        if (match.startsWith('\\(')) {
+          content = match.slice(2, -2).trim();
+        } else if (match.startsWith('$')) {
+          content = match.slice(1, -1).trim();
+        }
+        const token = `@@MATH_INLINE_${mathTokens.length}@@`;
+        mathTokens.push({ content, display: false });
+        return token;
+      });
+
+      // 4. 보호했던 코드 블록 복원
+      text = text.replace(/@@CODE_TOKEN_(\d+)@@/g, (_, idx) => {
+        return codeTokens[parseInt(idx, 10)];
+      });
+
+      // 5. Marked 파서 실행 (수식이 격리된 순수 마크다운만 처리)
+      let html = marked.parse(text);
+
+      // 6. 블록 수식 문단(<p>@@MATH_BLOCK_n@@</p>) 래퍼 정리
+      html = html.replace(/<p>\s*(@@MATH_BLOCK_\d+@@)\s*<\/p>/g, '$1');
+
+      // 7. 플레이스홀더를 KaTeX 렌더링 HTML로 치환
+      html = html.replace(/@@MATH_(BLOCK|INLINE)_(\d+)@@/g, (match, type, idx) => {
+        const item = mathTokens[parseInt(idx, 10)];
+        if (!item) return match;
+        try {
+          if (window.katex) {
+            return katex.renderToString(item.content, {
+              displayMode: item.display,
+              throwOnError: false
+            });
+          }
+          return item.display ? `\\[${item.content}\\]` : `\\(${item.content}\\)`;
+        } catch (e) {
+          console.error('KaTeX rendering error:', e);
+          return `<span class="katex-error" title="${escapeHtml(e.message)}">${escapeHtml(item.content)}</span>`;
+        }
+      });
+
+      return html;
+    }
+
+    function closeAllPanels() {
+      let changed = false;
+      if (isSidebarOpen) {
+        isSidebarOpen = false;
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('has-sidebar-open');
+        btnFileToggle.classList.remove('active');
+        btnTocToggle.classList.remove('active');
+        changed = true;
+      }
+      if (isSettingsOpen) {
+        isSettingsOpen = false;
+        settingsSidebar.classList.add('collapsed');
+        btnSettingsToggle.classList.remove('active');
+        changed = true;
+      }
+      return changed;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!isSidebarOpen && !isSettingsOpen) return;
+      if (e.target.closest('#sidebar') || e.target.closest('#settings-sidebar') || e.target.closest('header')) {
+        return;
+      }
+      closeAllPanels();
+    });
+
+    function updateNavTitle(titleText) {
+      document.title = `${titleText} — 웹북 뷰어`;
+
+      navTitleTrack.classList.remove('is-marquee');
+      navTitleTrack.innerHTML = '';
+
+      const span = document.createElement('span');
+      span.className = 'nav-title';
+      span.id = 'nav-doc-title';
+      span.textContent = titleText;
+      navTitleTrack.appendChild(span);
+      navDocTitle = span;
+
+      requestAnimationFrame(() => {
+        const wrapWidth = navTitleWrapper.clientWidth;
+        const textWidth = span.scrollWidth;
+
+        if (textWidth > wrapWidth) {
+          const clone = span.cloneNode(true);
+          clone.removeAttribute('id');
+          navTitleTrack.appendChild(clone);
+
+          const totalDist = textWidth + 48;
+          const duration = Math.max(8, totalDist / 35);
+          navTitleTrack.style.setProperty('--marquee-duration', `${duration}s`);
+          navTitleTrack.classList.add('is-marquee');
+        }
+      });
+    }
+
+    function setSidebarTab(tabName) {
+      activeTab = tabName;
+      if (tabName === 'files') {
+        tabBtnFiles.classList.add('active');
+        tabBtnToc.classList.remove('active');
+        panelFiles.classList.add('active');
+        panelToc.classList.remove('active');
+        btnFileToggle.classList.add('active');
+        btnTocToggle.classList.remove('active');
+      } else {
+        tabBtnToc.classList.add('active');
+        tabBtnFiles.classList.remove('active');
+        panelToc.classList.add('active');
+        panelFiles.classList.remove('active');
+        btnTocToggle.classList.add('active');
+        btnFileToggle.classList.remove('active');
+      }
+    }
+
+    function toggleSidebar(targetTab) {
+      if (isSettingsOpen) toggleSettings(false);
+
+      if (isSidebarOpen && activeTab === targetTab) {
+        isSidebarOpen = false;
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('has-sidebar-open');
+        btnFileToggle.classList.remove('active');
+        btnTocToggle.classList.remove('active');
+      } else {
+        isSidebarOpen = true;
+        sidebar.classList.remove('collapsed');
+        if (currentMode === 'scroll' && window.innerWidth >= 1280) {
+          document.body.classList.add('has-sidebar-open');
+        }
+        setSidebarTab(targetTab);
+      }
+    }
+
+    function toggleSettings(forceState) {
+      isSettingsOpen = (typeof forceState === 'boolean') ? forceState : !isSettingsOpen;
+
+      if (isSettingsOpen && window.innerWidth < 768 && isSidebarOpen) {
+        isSidebarOpen = false;
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('has-sidebar-open');
+        btnFileToggle.classList.remove('active');
+        btnTocToggle.classList.remove('active');
+      }
+
+      if (isSettingsOpen) {
+        settingsSidebar.classList.remove('collapsed');
+        btnSettingsToggle.classList.add('active');
+      } else {
+        settingsSidebar.classList.add('collapsed');
+        btnSettingsToggle.classList.remove('active');
+      }
+    }
+
+    btnFileToggle.addEventListener('click', () => toggleSidebar('files'));
+    btnTocToggle.addEventListener('click', () => toggleSidebar('toc'));
+    tabBtnFiles.addEventListener('click', () => setSidebarTab('files'));
+    tabBtnToc.addEventListener('click', () => setSidebarTab('toc'));
+    btnSettingsToggle.addEventListener('click', () => toggleSettings());
+    btnSettingsClose.addEventListener('click', () => toggleSettings(false));
+
+    function renderContent(htmlString, titleText) {
+      updateNavTitle(titleText);
+      rawArticle.innerHTML = htmlString;
+
+      // 추가 안전망: HTML 문서 직접 로드 시에도 KaTeX 렌더링 보장
+      if (window.renderMathInElement) {
+        renderMathInElement(rawArticle, katexConfig);
+      }
+
+      initTableOfContents();
+
+      if (currentMode === 'single') {
+        currentPageIndex = 0;
+        splitDocumentIntoPages();
+      } else {
+        window.scrollTo(0, 0);
+        updateScrollProgress();
+      }
+    }
+
+    btnOpenFile.addEventListener('click', () => {
+      localFileInput.click();
+    });
+
+    localFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const rawText = event.target.result;
+        let docTitle = file.name.replace(/\.[^/.]+$/, "");
+        const h1Match = rawText.match(/^#\s+(.+)$/m);
+        if (h1Match) {
+          docTitle = h1Match[1].trim();
+        }
+
+        const parsedHtml = (file.name.endsWith('.html') || file.name.endsWith('.htm'))
+          ? rawText
+          : parseMarkdownSafe(rawText);
+
+        renderContent(parsedHtml, docTitle);
+
+        const localId = 'local-' + Date.now();
+        const localItem = { id: localId, title: docTitle, isLocal: true };
+        manifestData.unshift(localItem);
+        currentChapterId = localId;
+        renderFileList();
+      };
+      reader.readAsText(file, 'utf-8');
+      e.target.value = '';
+    });
+
+    let tocObserver = null;
+    function initTableOfContents() {
+      if (tocObserver) tocObserver.disconnect();
+      const headings = rawArticle.querySelectorAll('h2');
+      tocListEl.innerHTML = '';
+
+      if (headings.length === 0) {
+        tocListEl.innerHTML = '<li style="padding: 10px; font-size: 0.8rem; color: var(--sub-color);">세부 섹션(H2)이 없습니다.</li>';
+        return;
+      }
+
+      headings.forEach((heading, index) => {
+        if (!heading.id) {
+          heading.id = 'sec-' + (index + 1);
+        }
+        const li = document.createElement('li');
+        li.className = 'toc-item';
+        li.dataset.targetId = heading.id;
+
+        const a = document.createElement('a');
+        a.href = '#' + heading.id;
+        a.textContent = heading.textContent.trim();
+        a.addEventListener('click', (e) => {
+          if (currentMode === 'single') {
+            setViewMode('scroll');
+          }
+          if (window.innerWidth < 768) {
+            toggleSidebar(activeTab);
+          }
+        });
+
+        li.appendChild(a);
+        tocListEl.appendChild(li);
+      });
+
+      tocObserver = new IntersectionObserver((entries) => {
+        if (currentMode !== 'scroll') return;
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const activeId = entry.target.id;
+            const items = tocListEl.querySelectorAll('.toc-item');
+            items.forEach(item => {
+              if (item.dataset.targetId === activeId) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              } else {
+                item.classList.remove('active');
+              }
+            });
+          }
+        });
+      }, {
+        root: null,
+        rootMargin: '0px 0px -70% 0px',
+        threshold: 0
+      });
+
+      headings.forEach(h => tocObserver.observe(h));
+    }
+
+    async function loadChapter(chapterId) {
+      const chapter = manifestData.find(c => c.id === chapterId) || manifestData[0];
+      if (!chapter || chapter.isLocal) return;
+
+      currentChapterId = chapter.id;
+
+      fileListEl.querySelectorAll('.toc-item').forEach(li => {
+        li.classList.toggle('active', li.dataset.id === chapter.id);
+      });
+
+      try {
+        const response = await fetch(chapter.file);
+        if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
+        const rawContent = await response.text();
+
+        const parsedHtml = chapter.file.endsWith('.html') ? rawContent : parseMarkdownSafe(rawContent);
+        renderContent(parsedHtml, chapter.title);
+      } catch (err) {
+        rawArticle.innerHTML = `<p style="color: #ef4444; padding: 20px;">[오류] 파일 로딩 실패: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    function renderFileList() {
+      fileListEl.innerHTML = manifestData.map(ch => `
+        <li class="toc-item ${ch.id === currentChapterId ? 'active' : ''}" data-id="${ch.id}">
+          <a href="#${ch.id}">${escapeHtml(ch.title)}</a>
+        </li>
+      `).join('');
+
+      fileListEl.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = a.getAttribute('href').replace('#', '');
+          const targetItem = manifestData.find(i => i.id === targetId);
+          if (targetItem && !targetItem.isLocal) {
+            window.location.hash = targetId;
+          }
+          if (window.innerWidth < 768) {
+            toggleSidebar(activeTab);
+          }
+        });
+      });
+    }
+
+    async function init() {
+      if (window.innerWidth < 1280) {
+        isSidebarOpen = false;
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('has-sidebar-open');
+        btnFileToggle.classList.remove('active');
+        btnTocToggle.classList.remove('active');
+      }
+
+      updateNavTitle(navDocTitle.textContent);
+
+      try {
+        const res = await fetch('manifest.json');
+        if (!res.ok) throw new Error('manifest.json 없음');
+        manifestData = await res.json();
+        renderFileList();
+
+        window.addEventListener('hashchange', () => {
+          const targetId = window.location.hash.replace('#', '');
+          if (targetId && targetId !== currentChapterId) {
+            loadChapter(targetId);
+          }
+        });
+
+        const initialId = window.location.hash.replace('#', '') || (manifestData[0] ? manifestData[0].id : null);
+        if (initialId) {
+          loadChapter(initialId);
+        }
+      } catch (err) {
+        updateNavTitle('문서를 열어주세요');
+        fileListEl.innerHTML = '<li style="padding: 10px; font-size: 0.8rem; color: var(--sub-color);">등록된 목록 파일이 없습니다. [📁 열기]로 파일을 직접 여세요.</li>';
+      }
+    }
+
+    const btnModeScroll = document.getElementById('btn-mode-scroll');
+    const btnModeSingle = document.getElementById('btn-mode-single');
+
+    function setViewMode(mode) {
+      currentMode = mode;
+      if (mode === 'scroll') {
+        btnModeScroll.classList.add('active');
+        btnModeSingle.classList.remove('active');
+        scrollContainer.style.display = 'block';
+        paginatedContainer.style.display = 'none';
+        centerPager.style.display = 'none';
+        if (isSidebarOpen && window.innerWidth >= 1280) {
+          document.body.classList.add('has-sidebar-open');
+        }
+        updateScrollProgress();
+      } else {
+        btnModeSingle.classList.add('active');
+        btnModeScroll.classList.remove('active');
+        scrollContainer.style.display = 'none';
+        paginatedContainer.style.display = 'flex';
+        centerPager.style.display = 'flex';
+        closeAllPanels();
+        currentPageIndex = 0;
+        splitDocumentIntoPages();
+      }
+    }
+
+    btnModeScroll.addEventListener('click', () => setViewMode('scroll'));
+    btnModeSingle.addEventListener('click', () => setViewMode('single'));
+
+    function splitDocumentIntoPages() {
+      if (currentMode !== 'single') return;
+
+      const containerW = paginatedContainer.clientWidth;
+      const targetFrameW = Math.floor(containerW * currentMarginRatio);
+      pageFrame.style.width = targetFrameW + 'px';
+
+      const padY = window.innerWidth < 640 ? 44 : 64;
+      const availH = pageFrame.clientHeight - padY;
+
+      hiddenMeasurer.style.width = targetFrameW + 'px';
+      hiddenMeasurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+      hiddenMeasurer.style.fontSize = currentFontSize + 'px';
+      hiddenMeasurer.style.fontWeight = currentFontWeight;
+      hiddenMeasurer.innerHTML = '';
+
+      const originalBlocks = Array.from(rawArticle.children);
+      const generatedPages = [];
+
+      let currentSheet = document.createElement('div');
+      currentSheet.style.boxSizing = 'border-box';
+      hiddenMeasurer.appendChild(currentSheet);
+
+      for (let i = 0; i < originalBlocks.length; i++) {
+        const block = originalBlocks[i];
+        const clone = block.cloneNode(true);
+        currentSheet.appendChild(clone);
+
+        if (currentSheet.offsetHeight > availH) {
+          if (currentSheet.children.length > 1) {
+            currentSheet.removeChild(clone);
+            commitSheet(currentSheet, generatedPages);
+
+            currentSheet = document.createElement('div');
+            hiddenMeasurer.innerHTML = '';
+            hiddenMeasurer.appendChild(currentSheet);
+            currentSheet.appendChild(clone);
+          }
+
+          // 단락 내부에 KaTeX 수식이 없는 순수 텍스트 단락만 문장 단위 분할 수행
+          if (currentSheet.offsetHeight > availH && clone.tagName === 'P' && !clone.querySelector('.katex')) {
+            currentSheet.removeChild(clone);
+            const sentences = clone.innerText.match(/[^.!?]+[.!?]+(\s+|$)\vert{}[^.!?]+$/g) || [clone.innerText];
+
+            let pPart = document.createElement('p');
+            currentSheet.appendChild(pPart);
+
+            for (const sentence of sentences) {
+              const oldText = pPart.innerText;
+              pPart.innerText += (oldText ? ' ' : '') + sentence.trim();
+
+              if (currentSheet.offsetHeight > availH) {
+                pPart.innerText = oldText;
+                if (!pPart.innerText) {
+                  currentSheet.removeChild(pPart);
+                }
+                commitSheet(currentSheet, generatedPages);
+
+                currentSheet = document.createElement('div');
+                hiddenMeasurer.innerHTML = '';
+                hiddenMeasurer.appendChild(currentSheet);
+
+                pPart = document.createElement('p');
+                pPart.innerText = sentence.trim();
+                currentSheet.appendChild(pPart);
+              }
+            }
+          }
+        }
+      }
+
+      if (currentSheet.children.length > 0) {
+        commitSheet(currentSheet, generatedPages);
+      }
+
+      pageFrame.innerHTML = '';
+      generatedPages.forEach((pageEl) => {
+        pageFrame.appendChild(pageEl);
+      });
+
+      totalPageCount = generatedPages.length || 1;
+      if (currentPageIndex >= totalPageCount) {
+        currentPageIndex = totalPageCount - 1;
+      }
+      showPage(currentPageIndex);
+    }
+
+    function commitSheet(measuringSheet, generatedList) {
+      const finalSheet = document.createElement('div');
+      finalSheet.className = 'paged-sheet';
+      finalSheet.innerHTML = measuringSheet.innerHTML;
+      generatedList.push(finalSheet);
+    }
+
+    function showPage(index) {
+      const sheets = pageFrame.querySelectorAll('.paged-sheet');
+      if (sheets.length === 0) return;
+
+      currentPageIndex = Math.max(0, Math.min(index, sheets.length - 1));
+
+      sheets.forEach((sheet, idx) => {
+        sheet.classList.toggle('active', idx === currentPageIndex);
+      });
+
+      pageInfoDisplay.textContent = `${currentPageIndex + 1} / ${totalPageCount}`;
+      btnPagePrev.disabled = (currentPageIndex === 0);
+      btnPageNext.disabled = (currentPageIndex === totalPageCount - 1);
+
+      progressBar.style.width = (((currentPageIndex + 1) / totalPageCount) * 100) + '%';
+    }
+
+    function nextPage() {
+      if (currentPageIndex < totalPageCount - 1) {
+        showPage(currentPageIndex + 1);
+      }
+    }
+
+    function prevPage() {
+      if (currentPageIndex > 0) {
+        showPage(currentPageIndex - 1);
+      }
+    }
+
+    btnPagePrev.addEventListener('click', prevPage);
+    btnPageNext.addEventListener('click', nextPage);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (isSidebarOpen || isSettingsOpen) {
+          e.preventDefault();
+          closeAllPanels();
+          return;
+        }
+      }
+
+      if (currentMode !== 'single') return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextPage();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevPage();
+      }
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if (currentMode !== 'single') return;
+      if (wheelCooldown) return;
+
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(delta) > 18) {
+        wheelCooldown = true;
+        if (delta > 0) {
+          nextPage();
+        } else {
+          prevPage();
+        }
+        setTimeout(() => { wheelCooldown = false; }, 260);
+      }
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      if (currentMode === 'single') {
+        splitDocumentIntoPages();
+      } else {
+        updateScrollProgress();
+      }
+
+      if (navDocTitle && navDocTitle.textContent) {
+        updateNavTitle(navDocTitle.textContent);
+      }
+    });
+
+    document.getElementById('margin-select').addEventListener('change', (e) => {
+      currentMarginRatio = parseFloat(e.target.value);
+      if (currentMode === 'single') splitDocumentIntoPages();
+    });
+
+    function updateFontSize(size) {
+      currentFontSize = Math.min(36, Math.max(16, size));
+      document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
+      fontSizeDisplay.textContent = currentFontSize + 'px';
+      if (currentMode === 'single') splitDocumentIntoPages();
+    }
+    document.getElementById('btn-font-inc').addEventListener('click', () => updateFontSize(currentFontSize + 1));
+    document.getElementById('btn-font-dec').addEventListener('click', () => updateFontSize(currentFontSize - 1));
+
+    const weightSteps = [300, 400, 500, 600, 700];
+    function updateFontWeight(direction) {
+      let idx = weightSteps.indexOf(currentFontWeight);
+      if (idx === -1) idx = 2;
+      if (direction === 'inc' && idx < weightSteps.length - 1) idx++;
+      if (direction === 'dec' && idx > 0) idx--;
+      currentFontWeight = weightSteps[idx];
+      document.documentElement.style.setProperty('--font-weight', currentFontWeight);
+      fontWeightDisplay.textContent = currentFontWeight;
+      if (currentMode === 'single') splitDocumentIntoPages();
+    }
+    document.getElementById('btn-weight-inc').addEventListener('click', () => updateFontWeight('inc'));
+    document.getElementById('btn-weight-dec').addEventListener('click', () => updateFontWeight('dec'));
+
+    document.getElementById('font-select').addEventListener('change', (e) => {
+      document.documentElement.style.setProperty('--font-family-body', e.target.value);
+      if (currentMode === 'single') splitDocumentIntoPages();
+    });
+
+    document.getElementById('theme-select').addEventListener('change', (e) => {
+      document.documentElement.setAttribute('data-theme', e.target.value);
+    });
+
+    function updateScrollProgress() {
+      if (currentMode !== 'scroll') return;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight || window.innerHeight;
+      const maxScroll = scrollHeight - clientHeight;
+      const progress = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
+      progressBar.style.width = Math.min(100, Math.max(0, progress)) + '%';
+    }
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+
+    document.getElementById('btn-print').addEventListener('click', () => {
+      window.print();
+    });
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
