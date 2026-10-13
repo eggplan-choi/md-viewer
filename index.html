@@ -1588,21 +1588,37 @@
       const mathTokens = [];
       const codeTokens = [];
 
+      // 1. 코드 블록(`...`, ```...```) 우선 보호
       let text = rawText.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
         const token = `@@CODE_TOKEN_${codeTokens.length}@@`;
         codeTokens.push(match);
         return token;
       });
 
-      text = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g, (match) => {
-        let content = '';
-        if (match.startsWith('$$')) content = match.slice(2, -2).trim();
-        else if (match.startsWith('\\[')) content = match.slice(2, -2).trim();
+      // 2. 인용문(>) 내부 또는 일반 본문의 디스플레이 수식($$...$$ 및 [...]) 추출
+      text = text.replace(/(^|\n)([ \t]*(?:>[ \t]*)*)\$\$([\s\S]*?)\$\$/g, (match, leadingNewline, quotePrefix, mathContent) => {
+        // 인용문 안에 수식이 여러 줄로 있을 경우, 내부 줄 시작의 '>' 접두사 및 공백 제거
+        const cleanContent = mathContent.split('\n').map(line => {
+          return line.replace(/^[ \t]*(?:>[ \t]*)+/, '');
+        }).join('\n').trim();
+
         const token = `@@MATH_BLOCK_${mathTokens.length}@@`;
-        mathTokens.push({ content, display: true });
-        return `\n\n${token}\n\n`;
+        mathTokens.push({ content: cleanContent, display: true });
+        // 인용문 레벨(quotePrefix)을 유지해 마크다운 구조가 쪼개지지 않도록 배치
+        return `${leadingNewline}${quotePrefix}${token}`;
       });
 
+      text = text.replace(/(^|\n)([ \t]*(?:>[ \t]*)*)\\\[([\s\S]*?)\\\]/g, (match, leadingNewline, quotePrefix, mathContent) => {
+        const cleanContent = mathContent.split('\n').map(line => {
+          return line.replace(/^[ \t]*(?:>[ \t]*)+/, '');
+        }).join('\n').trim();
+
+        const token = `@@MATH_BLOCK_${mathTokens.length}@@`;
+        mathTokens.push({ content: cleanContent, display: true });
+        return `${leadingNewline}${quotePrefix}${token}`;
+      });
+
+      // 3. 인라인 수식($...$, \(...\)) 추출
       text = text.replace(/(\\\([\s\S]*?\\\)|\$([^\$\s](?:[^\$\n]*?[^\$\s])?)\$|\$([^\$\s])\$)/g, (match) => {
         let content = '';
         if (match.startsWith('\\(')) content = match.slice(2, -2).trim();
@@ -1612,11 +1628,16 @@
         return token;
       });
 
+      // 4. 보호했던 코드 블록 원복
       text = text.replace(/@@CODE_TOKEN_(\d+)@@/g, (_, idx) => codeTokens[parseInt(idx, 10)]);
 
+      // 5. marked 파싱
       let html = marked.parse(text);
+
+      // 6. 블록 수식 토큰을 감싸는 p 태그 제거
       html = html.replace(/<p>\s*(@@MATH_BLOCK_\d+@@)\s*<\/p>/g, '$1');
 
+      // 7. KaTeX 렌더링 치환
       html = html.replace(/@@MATH_(BLOCK|INLINE)_(\d+)@@/g, (match, type, idx) => {
         const item = mathTokens[parseInt(idx, 10)];
         if (!item) return match;
