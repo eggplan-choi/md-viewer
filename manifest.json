@@ -55,6 +55,11 @@
     "file": "docs/0-B-real_analysis/0-B-2. 무한히 가까워진다는 것.md"
   },
   {
+    "id": "0-B-3",
+    "title": "0-B-3. 극한은 언제 존재하는가?",
+    "file": "docs/0-B-real_analysis/0-B-3. 극한은 언제 존재하는가.md"
+  },
+  {
     "id": "0-B",
     "title": "0-B. 실해석학 — 극한과 변화의 구조",
     "file": "docs/0-B-real_analysis/0-B. 실해석학 집필 계획.md"
