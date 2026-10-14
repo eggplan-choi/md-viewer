@@ -1284,7 +1284,7 @@
           </div>
           <div class="app-info-row">
             <span>뷰어 버젼</span>
-            <span class="badge-version">1.1.0</span>
+            <span class="badge-version">1.1.1</span>
           </div>
         </div>
       </div>
@@ -1364,10 +1364,10 @@
     let isResumeModalOpen = false;
     let modalFocusedIndex = 0; // 0: 이어서 읽기, 1: 처음부터 읽기
 
-    // 낱장 모드 2분할 탭/클릭 내비게이션 감지 변수
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let suppressClickUntil = 0;
 
     const scrollContainer = document.getElementById('scroll-container');
     const paginatedContainer = document.getElementById('paginated-container');
@@ -1599,7 +1599,6 @@
       }
     });
 
-    // 마크다운 파서 (인용문 내부 멀티라인 수식 보호 지원)
     function parseMarkdownSafe(rawText) {
       const mathTokens = [];
       const codeTokens = [];
@@ -2165,7 +2164,6 @@
       }
     }
 
-    // 본문 최상위 블록 식별자 태깅 (스크롤 ↔ 낱장 모드 위치 동기화용)
     function tagRawBlocks() {
       const children = Array.from(rawArticle.children);
       children.forEach((child, idx) => {
@@ -2173,7 +2171,6 @@
       });
     }
 
-    // 스크롤 모드 기준 현재 화면 상단에 보이는 블록 인덱스 탐색
     function getScrollActiveBlockIndex() {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
       const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
@@ -2196,7 +2193,6 @@
       return foundIdx;
     }
 
-    // 낱장 모드 기준 현재 페이지의 첫 번째 블록에 해당하는 스크롤 위치 계산
     function getScrollTargetFromCurrentPage() {
       if (currentPageIndex >= totalPageCount - 1) {
         const maxScroll = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
@@ -2331,7 +2327,6 @@
       if (currentMode === mode) return;
 
       if (mode === 'single') {
-        // 스크롤 모드 -> 낱장 모드 전환 시 읽던 위치 동기화
         const fromBlockIdx = getScrollActiveBlockIndex();
         currentMode = 'single';
         saveViewerSettings();
@@ -2362,8 +2357,6 @@
         }
         showPage(currentPageIndex);
       } else {
-        // 낱장 모드 -> 스크롤 모드 전환 시 읽던 위치 동기화
-        const targetScrollY = getScrollTargetFromCurrentPage();
         currentMode = 'scroll';
         saveViewerSettings();
         syncMarginControlState();
@@ -2377,11 +2370,13 @@
           document.body.classList.add('has-sidebar-open');
         }
 
-        setTimeout(() => {
+        // scrollContainer가 display: block이 된 후 정확한 offsetTop 계산 및 스크롤 복원
+        requestAnimationFrame(() => {
+          const targetScrollY = getScrollTargetFromCurrentPage();
           window.scrollTo({ top: targetScrollY, behavior: 'instant' });
           updateScrollProgress();
           updateActiveHeadingOnScroll();
-        }, 50);
+        });
       }
     }
 
@@ -2462,7 +2457,7 @@
         commitSheet(currentSheet, generatedPages);
       }
 
-      // 마지막 본문 페이지 뒤에 한 페이지 더 삽입: 엔딩 시트 (이전/다음 문서 내비게이션)
+      // 마지막 본문 페이지 뒤에 엔딩 시트 삽입
       const endingSheet = document.createElement('div');
       endingSheet.className = 'paged-sheet ending-sheet';
       endingSheet.dataset.isEndingPage = 'true';
@@ -2538,7 +2533,15 @@
     btnPagePrev.addEventListener('click', prevPage);
     btnPageNext.addEventListener('click', nextPage);
 
-    // 낱장 모드 본문 영역 좌/우 2분할 탭/클릭 이벤트 (텍스트 드래그 및 롱터치 선택 보호)
+    // 낱장 모드 페이지 넘김 직후 고스트 클릭 차단
+    pageFrame.addEventListener('click', (e) => {
+      if (Date.now() < suppressClickUntil) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    // 낱장 모드 2분할 탭/클릭 내비게이션
     pageFrame.addEventListener('pointerdown', (e) => {
       if (currentMode !== 'single') return;
       touchStartX = e.clientX;
@@ -2553,27 +2556,30 @@
       const duration = Date.now() - touchStartTime;
       const dist = Math.hypot(e.clientX - touchStartX, e.clientY - touchStartY);
 
-      // 드래그/스와이프 이동이거나 롱프레스(텍스트 선택)인 경우 페이지 넘김 취소
       if (dist > 15 || duration > 300) return;
 
-      // 이미 본문 텍스트가 블록 선택되어 있는 경우 취소
       const sel = window.getSelection();
       if (sel && sel.toString().trim().length > 0) return;
 
-      // 링크, 버튼, 입력 컨트롤, 수식 등 인터랙션 요소 클릭 시 페이지 넘김 취소
       if (e.target.closest('button, a, input, select, textarea, .pager-btn, .doc-nav-btn, .katex')) {
         return;
       }
 
-      // 본문 프레임 중심선 기준 좌/우 분할 내비게이션
       const frameRect = pageFrame.getBoundingClientRect();
       const midX = frameRect.left + (frameRect.width / 2);
+
+      // 페이지 전환 시 후속 고스트 클릭 억제 및 잔여 텍스트 선택 방지
+      suppressClickUntil = Date.now() + 350;
 
       if (e.clientX < midX) {
         prevPage();
       } else {
         nextPage();
       }
+
+      const selAfter = window.getSelection();
+      if (selAfter) selAfter.removeAllRanges();
+      e.preventDefault();
     });
 
     window.addEventListener('keydown', (e) => {
