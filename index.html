@@ -489,7 +489,8 @@
       padding: 0;
     }
 
-    .folder-chevron {
+    .folder-chevron,
+    .doc-chevron {
       font-size: 0.65rem;
       color: var(--sub-color);
       margin-left: 4px;
@@ -497,7 +498,8 @@
       flex-shrink: 0;
       margin-top: 4px;
     }
-    .folder-chevron.expanded { transform: rotate(90deg); }
+    .folder-chevron.expanded,
+    .doc-chevron.expanded { transform: rotate(90deg); }
 
     .folder-children {
       display: none;
@@ -1284,7 +1286,7 @@
           </div>
           <div class="app-info-row">
             <span>뷰어 버젼</span>
-            <span class="badge-version">1.1.1</span>
+            <span class="badge-version">1.1.2</span>
           </div>
         </div>
       </div>
@@ -1355,6 +1357,7 @@
 
     let isSidebarOpen = true;
     let isSettingsOpen = false;
+    let isTocOpen = true; // 현재 활성화된 문서의 목차(TOC) 열림/닫힘 상태
     let manifestData = [];
     let currentChapterId = null;
     let currentHeadings = [];
@@ -1362,7 +1365,7 @@
     const openFolders = new Set();
 
     let isResumeModalOpen = false;
-    let modalFocusedIndex = 0; // 0: 이어서 읽기, 1: 처음부터 읽기
+    let modalFocusedIndex = 0;
 
     let touchStartX = 0;
     let touchStartY = 0;
@@ -1863,6 +1866,7 @@
 
         folderNode.files.forEach(fileItem => {
           const isCurrent = (fileItem.id === currentChapterId);
+          const hasToc = isCurrent && currentHeadings.length > 0;
           const fileLi = document.createElement('li');
           fileLi.className = 'tree-file-node';
 
@@ -1873,22 +1877,26 @@
           fileA.innerHTML = `
             <span class="tree-icon">${isCurrent ? '📘' : '📄'}</span>
             <span class="tree-file-title">${escapeHtml(fileItem.title)}</span>
+            ${hasToc ? `<span class="doc-chevron ${isTocOpen ? 'expanded' : ''}">▶</span>` : ''}
           `;
 
           fileA.addEventListener('click', (e) => {
             e.preventDefault();
             if (fileItem.id !== currentChapterId) {
+              isTocOpen = true;
               window.location.hash = fileItem.id;
               loadChapter(fileItem.id);
-            }
-            if (window.innerWidth < 1280) {
-              setSidebarOpen(false);
+            } else {
+              // 이미 활성화된 문서를 다시 클릭하면 문서구조(TOC) 토글
+              isTocOpen = !isTocOpen;
+              renderTree();
             }
           });
 
           fileLi.appendChild(fileA);
 
-          if (isCurrent && currentHeadings.length > 0) {
+          // 인셋 목차 카드 (문서가 선택되어 있고 isTocOpen 상태일 때만 표시)
+          if (isCurrent && isTocOpen && currentHeadings.length > 0) {
             const tocCard = document.createElement('div');
             tocCard.className = 'doc-toc-card';
 
@@ -2274,6 +2282,7 @@
       if (!chapter || chapter.isLocal) return;
 
       currentChapterId = chapter.id;
+      isTocOpen = true; // 새 문서 로드 시 목차는 항상 펼쳐진 상태로 시작
       autoExpandParentFolders(chapter);
       updateSidebarPathHeader(chapter);
       saveReadingProgress(currentChapterId, null, null, null);
@@ -2311,6 +2320,7 @@
         const localItem = { id: localId, title: docTitle, file: `📁 로컬 문서/${file.name}`, isLocal: true };
         manifestData.unshift(localItem);
         currentChapterId = localId;
+        isTocOpen = true;
         autoExpandParentFolders(localItem);
         updateSidebarPathHeader(localItem);
 
@@ -2370,7 +2380,6 @@
           document.body.classList.add('has-sidebar-open');
         }
 
-        // scrollContainer가 display: block이 된 후 정확한 offsetTop 계산 및 스크롤 복원
         requestAnimationFrame(() => {
           const targetScrollY = getScrollTargetFromCurrentPage();
           window.scrollTo({ top: targetScrollY, behavior: 'instant' });
@@ -2457,7 +2466,6 @@
         commitSheet(currentSheet, generatedPages);
       }
 
-      // 마지막 본문 페이지 뒤에 엔딩 시트 삽입
       const endingSheet = document.createElement('div');
       endingSheet.className = 'paged-sheet ending-sheet';
       endingSheet.dataset.isEndingPage = 'true';
@@ -2533,7 +2541,6 @@
     btnPagePrev.addEventListener('click', prevPage);
     btnPageNext.addEventListener('click', nextPage);
 
-    // 낱장 모드 페이지 넘김 직후 고스트 클릭 차단
     pageFrame.addEventListener('click', (e) => {
       if (Date.now() < suppressClickUntil) {
         e.preventDefault();
@@ -2541,7 +2548,6 @@
       }
     }, true);
 
-    // 낱장 모드 2분할 탭/클릭 내비게이션
     pageFrame.addEventListener('pointerdown', (e) => {
       if (currentMode !== 'single') return;
       touchStartX = e.clientX;
@@ -2568,7 +2574,6 @@
       const frameRect = pageFrame.getBoundingClientRect();
       const midX = frameRect.left + (frameRect.width / 2);
 
-      // 페이지 전환 시 후속 고스트 클릭 억제 및 잔여 텍스트 선택 방지
       suppressClickUntil = Date.now() + 350;
 
       if (e.clientX < midX) {
