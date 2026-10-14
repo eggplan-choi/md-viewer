@@ -725,7 +725,6 @@
       background: var(--control-bg);
     }
 
-    /* 설정 패널 앱 정보 카드 */
     .app-info-card {
       margin-top: 8px;
       padding: 12px 14px;
@@ -759,7 +758,6 @@
       font-weight: 700;
     }
 
-    /* 읽기 위치 확인 모달 팝업 */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -1066,6 +1064,7 @@
       display: flex;
       flex-direction: column;
       transition: width 0.15s ease;
+      cursor: default;
     }
 
     .paged-sheet {
@@ -1080,6 +1079,17 @@
     .paged-sheet.active {
       display: block !important;
       animation: sheetFade 0.15s ease-in-out;
+    }
+
+    .paged-sheet.ending-sheet {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .paged-sheet.ending-sheet.active {
+      display: flex !important;
     }
 
     @keyframes sheetFade {
@@ -1270,18 +1280,18 @@
           </div>
           <div class="app-info-row">
             <span>최종 뷰어 업데이트</span>
-            <strong>2026.10.12</strong>
+            <strong>2026.10.14</strong>
           </div>
           <div class="app-info-row">
             <span>뷰어 버젼</span>
-            <span class="badge-version">1.0.1</span>
+            <span class="badge-version">1.1.0</span>
           </div>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- 읽기 위치 확인 모달 팝업 (제목과 버튼만 표시) -->
+  <!-- 읽기 위치 확인 모달 팝업 -->
   <div id="resume-modal-overlay" class="modal-overlay" style="display: none;">
     <div class="modal-box" id="resume-modal-box" role="dialog" aria-modal="true">
       <div class="modal-header-row">
@@ -1353,6 +1363,11 @@
 
     let isResumeModalOpen = false;
     let modalFocusedIndex = 0; // 0: 이어서 읽기, 1: 처음부터 읽기
+
+    // 낱장 모드 2분할 탭/클릭 내비게이션 감지 변수
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
 
     const scrollContainer = document.getElementById('scroll-container');
     const paginatedContainer = document.getElementById('paginated-container');
@@ -1584,27 +1599,24 @@
       }
     });
 
+    // 마크다운 파서 (인용문 내부 멀티라인 수식 보호 지원)
     function parseMarkdownSafe(rawText) {
       const mathTokens = [];
       const codeTokens = [];
 
-      // 1. 코드 블록(`...`, ```...```) 우선 보호
       let text = rawText.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
         const token = `@@CODE_TOKEN_${codeTokens.length}@@`;
         codeTokens.push(match);
         return token;
       });
 
-      // 2. 인용문(>) 내부 또는 일반 본문의 디스플레이 수식($$...$$ 및 [...]) 추출
       text = text.replace(/(^|\n)([ \t]*(?:>[ \t]*)*)\$\$([\s\S]*?)\$\$/g, (match, leadingNewline, quotePrefix, mathContent) => {
-        // 인용문 안에 수식이 여러 줄로 있을 경우, 내부 줄 시작의 '>' 접두사 및 공백 제거
         const cleanContent = mathContent.split('\n').map(line => {
           return line.replace(/^[ \t]*(?:>[ \t]*)+/, '');
         }).join('\n').trim();
 
         const token = `@@MATH_BLOCK_${mathTokens.length}@@`;
         mathTokens.push({ content: cleanContent, display: true });
-        // 인용문 레벨(quotePrefix)을 유지해 마크다운 구조가 쪼개지지 않도록 배치
         return `${leadingNewline}${quotePrefix}${token}`;
       });
 
@@ -1618,7 +1630,6 @@
         return `${leadingNewline}${quotePrefix}${token}`;
       });
 
-      // 3. 인라인 수식($...$, \(...\)) 추출
       text = text.replace(/(\\\([\s\S]*?\\\)|\$([^\$\s](?:[^\$\n]*?[^\$\s])?)\$|\$([^\$\s])\$)/g, (match) => {
         let content = '';
         if (match.startsWith('\\(')) content = match.slice(2, -2).trim();
@@ -1628,16 +1639,12 @@
         return token;
       });
 
-      // 4. 보호했던 코드 블록 원복
       text = text.replace(/@@CODE_TOKEN_(\d+)@@/g, (_, idx) => codeTokens[parseInt(idx, 10)]);
 
-      // 5. marked 파싱
       let html = marked.parse(text);
 
-      // 6. 블록 수식 토큰을 감싸는 p 태그 제거
       html = html.replace(/<p>\s*(@@MATH_BLOCK_\d+@@)\s*<\/p>/g, '$1');
 
-      // 7. KaTeX 렌더링 치환
       html = html.replace(/@@MATH_(BLOCK|INLINE)_(\d+)@@/g, (match, type, idx) => {
         const item = mathTokens[parseInt(idx, 10)];
         if (!item) return match;
@@ -2052,6 +2059,7 @@
     }
 
     function setupButtonMarquee(trackEl, text) {
+      if (!trackEl) return;
       trackEl.classList.remove('is-marquee');
       trackEl.innerHTML = '';
       const span = document.createElement('span');
@@ -2093,6 +2101,11 @@
 
       const curIdx = siblings.findIndex(item => item.id === currentChapterId);
 
+      const pagedPrevBtn = document.getElementById('btn-paged-nav-prev');
+      const pagedNextBtn = document.getElementById('btn-paged-nav-next');
+      const pagedPrevTrack = document.getElementById('paged-nav-prev-track');
+      const pagedNextTrack = document.getElementById('paged-nav-next-track');
+
       if (curIdx > 0) {
         const prevItem = siblings[curIdx - 1];
         btnDocNavPrev.disabled = false;
@@ -2101,10 +2114,25 @@
           window.location.hash = prevItem.id;
           loadChapter(prevItem.id);
         };
+
+        if (pagedPrevBtn) {
+          pagedPrevBtn.disabled = false;
+          setupButtonMarquee(pagedPrevTrack, prevItem.title);
+          pagedPrevBtn.onclick = () => {
+            window.location.hash = prevItem.id;
+            loadChapter(prevItem.id);
+          };
+        }
       } else {
         btnDocNavPrev.disabled = true;
         setupButtonMarquee(docNavPrevTrack, '첫 번째 문서입니다');
         btnDocNavPrev.onclick = null;
+
+        if (pagedPrevBtn) {
+          pagedPrevBtn.disabled = true;
+          setupButtonMarquee(pagedPrevTrack, '첫 번째 문서입니다');
+          pagedPrevBtn.onclick = null;
+        }
       }
 
       if (curIdx >= 0 && curIdx < siblings.length - 1) {
@@ -2115,16 +2143,86 @@
           window.location.hash = nextItem.id;
           loadChapter(nextItem.id);
         };
+
+        if (pagedNextBtn) {
+          pagedNextBtn.disabled = false;
+          setupButtonMarquee(pagedNextTrack, nextItem.title);
+          pagedNextBtn.onclick = () => {
+            window.location.hash = nextItem.id;
+            loadChapter(nextItem.id);
+          };
+        }
       } else {
         btnDocNavNext.disabled = true;
         setupButtonMarquee(docNavNextTrack, '마지막 문서입니다');
         btnDocNavNext.onclick = null;
+
+        if (pagedNextBtn) {
+          pagedNextBtn.disabled = true;
+          setupButtonMarquee(pagedNextTrack, '마지막 문서입니다');
+          pagedNextBtn.onclick = null;
+        }
       }
+    }
+
+    // 본문 최상위 블록 식별자 태깅 (스크롤 ↔ 낱장 모드 위치 동기화용)
+    function tagRawBlocks() {
+      const children = Array.from(rawArticle.children);
+      children.forEach((child, idx) => {
+        child.dataset.blockIdx = idx;
+      });
+    }
+
+    // 스크롤 모드 기준 현재 화면 상단에 보이는 블록 인덱스 탐색
+    function getScrollActiveBlockIndex() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight || window.innerHeight;
+
+      if (scrollHeight - clientHeight > 0 && scrollTop >= scrollHeight - clientHeight - 40) {
+        return '__ENDING__';
+      }
+
+      const targetY = scrollTop + 84;
+      const blocks = Array.from(rawArticle.children);
+      let foundIdx = 0;
+      for (let i = 0; i < blocks.length; i++) {
+        if (blocks[i].offsetTop <= targetY) {
+          foundIdx = i;
+        } else {
+          break;
+        }
+      }
+      return foundIdx;
+    }
+
+    // 낱장 모드 기준 현재 페이지의 첫 번째 블록에 해당하는 스크롤 위치 계산
+    function getScrollTargetFromCurrentPage() {
+      if (currentPageIndex >= totalPageCount - 1) {
+        const maxScroll = (document.documentElement.scrollHeight || document.body.scrollHeight) - window.innerHeight;
+        return maxScroll > 0 ? maxScroll : 0;
+      }
+
+      const sheets = pageFrame.querySelectorAll('.paged-sheet');
+      const currentSheet = sheets[currentPageIndex];
+      if (!currentSheet) return 0;
+
+      const firstBlock = currentSheet.querySelector('[data-block-idx]');
+      if (!firstBlock) return 0;
+
+      const bIdx = firstBlock.dataset.blockIdx;
+      const rawTarget = rawArticle.querySelector(`[data-block-idx="${bIdx}"]`);
+      if (rawTarget) {
+        return Math.max(0, rawTarget.offsetTop - 74);
+      }
+      return 0;
     }
 
     function renderContent(htmlString, titleText) {
       updateNavTitle(titleText);
       rawArticle.innerHTML = htmlString;
+
+      tagRawBlocks();
 
       if (window.renderMathInElement) {
         renderMathInElement(rawArticle, katexConfig);
@@ -2135,7 +2233,6 @@
       currentActiveSecId = chapterProgress.activeSecId || null;
 
       extractHeadingsAndInitObserver();
-      updateDocNavigationButtons();
 
       const hasSavedPosition = (currentMode === 'single')
         ? (typeof chapterProgress.pageIdx === 'number' && chapterProgress.pageIdx > 0)
@@ -2144,10 +2241,12 @@
       if (currentMode === 'single') {
         currentPageIndex = (typeof chapterProgress.pageIdx === 'number') ? chapterProgress.pageIdx : 0;
         splitDocumentIntoPages();
+        updateDocNavigationButtons();
         if (hasSavedPosition) {
           showResumeModal();
         }
       } else {
+        updateDocNavigationButtons();
         const savedScrollY = chapterProgress.scrollY || 0;
         setTimeout(() => {
           window.scrollTo({ top: savedScrollY, behavior: 'instant' });
@@ -2229,11 +2328,46 @@
     const btnModeSingle = document.getElementById('btn-mode-single');
 
     function setViewMode(mode) {
-      currentMode = mode;
-      saveViewerSettings();
-      syncMarginControlState();
+      if (currentMode === mode) return;
 
-      if (mode === 'scroll') {
+      if (mode === 'single') {
+        // 스크롤 모드 -> 낱장 모드 전환 시 읽던 위치 동기화
+        const fromBlockIdx = getScrollActiveBlockIndex();
+        currentMode = 'single';
+        saveViewerSettings();
+        syncMarginControlState();
+
+        btnModeSingle.classList.add('active');
+        btnModeScroll.classList.remove('active');
+        scrollContainer.style.display = 'none';
+        paginatedContainer.style.display = 'flex';
+        headerPager.classList.add('active');
+        setSidebarOpen(false);
+        toggleSettings(false);
+
+        splitDocumentIntoPages();
+
+        if (fromBlockIdx === '__ENDING__') {
+          currentPageIndex = totalPageCount - 1;
+        } else {
+          let matchedPage = 0;
+          const sheets = pageFrame.querySelectorAll('.paged-sheet');
+          for (let p = 0; p < sheets.length; p++) {
+            if (sheets[p].querySelector(`[data-block-idx="${fromBlockIdx}"]`)) {
+              matchedPage = p;
+              break;
+            }
+          }
+          currentPageIndex = matchedPage;
+        }
+        showPage(currentPageIndex);
+      } else {
+        // 낱장 모드 -> 스크롤 모드 전환 시 읽던 위치 동기화
+        const targetScrollY = getScrollTargetFromCurrentPage();
+        currentMode = 'scroll';
+        saveViewerSettings();
+        syncMarginControlState();
+
         btnModeScroll.classList.add('active');
         btnModeSingle.classList.remove('active');
         scrollContainer.style.display = 'block';
@@ -2242,16 +2376,12 @@
         if (isSidebarOpen && window.innerWidth >= 1280) {
           document.body.classList.add('has-sidebar-open');
         }
-        updateScrollProgress();
-      } else {
-        btnModeSingle.classList.add('active');
-        btnModeScroll.classList.remove('active');
-        scrollContainer.style.display = 'none';
-        paginatedContainer.style.display = 'flex';
-        headerPager.classList.add('active');
-        setSidebarOpen(false);
-        toggleSettings(false);
-        splitDocumentIntoPages();
+
+        setTimeout(() => {
+          window.scrollTo({ top: targetScrollY, behavior: 'instant' });
+          updateScrollProgress();
+          updateActiveHeadingOnScroll();
+        }, 50);
       }
     }
 
@@ -2302,6 +2432,7 @@
             const sentences = clone.innerText.match(/[^.!?]+[.!?]+(\s+|$)\vert{}[^.!?]+$/g) || [clone.innerText];
 
             let pPart = document.createElement('p');
+            pPart.dataset.blockIdx = clone.dataset.blockIdx;
             currentSheet.appendChild(pPart);
 
             for (const sentence of sentences) {
@@ -2318,6 +2449,7 @@
                 hiddenMeasurer.appendChild(currentSheet);
 
                 pPart = document.createElement('p');
+                pPart.dataset.blockIdx = clone.dataset.blockIdx;
                 pPart.innerText = sentence.trim();
                 currentSheet.appendChild(pPart);
               }
@@ -2330,6 +2462,35 @@
         commitSheet(currentSheet, generatedPages);
       }
 
+      // 마지막 본문 페이지 뒤에 한 페이지 더 삽입: 엔딩 시트 (이전/다음 문서 내비게이션)
+      const endingSheet = document.createElement('div');
+      endingSheet.className = 'paged-sheet ending-sheet';
+      endingSheet.dataset.isEndingPage = 'true';
+      endingSheet.innerHTML = `
+        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; width:100%; max-width:540px; margin:0 auto;">
+          <div style="font-size:1.15rem; font-weight:700; color:var(--title-color); margin-bottom:28px; letter-spacing:-0.01em;">문서의 마지막입니다</div>
+          <div class="doc-nav-wrapper" style="display:flex; width:100%; border-top:1px solid var(--border-color); padding-top:28px; margin-top:0;">
+            <div class="doc-nav-row prev-row">
+              <button class="doc-nav-btn" id="btn-paged-nav-prev" title="이전 문서">
+                <span class="doc-nav-arrow">◀</span>
+                <div class="doc-nav-title-track" id="paged-nav-prev-track">
+                  <span class="doc-nav-title">이전 문서</span>
+                </div>
+              </button>
+            </div>
+            <div class="doc-nav-row next-row">
+              <button class="doc-nav-btn" id="btn-paged-nav-next" title="다음 문서">
+                <div class="doc-nav-title-track" id="paged-nav-next-track">
+                  <span class="doc-nav-title">다음 문서</span>
+                </div>
+                <span class="doc-nav-arrow">▶</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      generatedPages.push(endingSheet);
+
       pageFrame.innerHTML = '';
       generatedPages.forEach((pageEl) => pageFrame.appendChild(pageEl));
 
@@ -2337,6 +2498,8 @@
       if (currentPageIndex >= totalPageCount) currentPageIndex = totalPageCount - 1;
       if (currentPageIndex < 0) currentPageIndex = 0;
       showPage(currentPageIndex);
+
+      updateDocNavigationButtons();
     }
 
     function commitSheet(measuringSheet, generatedList) {
@@ -2374,6 +2537,44 @@
 
     btnPagePrev.addEventListener('click', prevPage);
     btnPageNext.addEventListener('click', nextPage);
+
+    // 낱장 모드 본문 영역 좌/우 2분할 탭/클릭 이벤트 (텍스트 드래그 및 롱터치 선택 보호)
+    pageFrame.addEventListener('pointerdown', (e) => {
+      if (currentMode !== 'single') return;
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      touchStartTime = Date.now();
+    });
+
+    pageFrame.addEventListener('pointerup', (e) => {
+      if (currentMode !== 'single') return;
+      if (isResumeModalOpen) return;
+
+      const duration = Date.now() - touchStartTime;
+      const dist = Math.hypot(e.clientX - touchStartX, e.clientY - touchStartY);
+
+      // 드래그/스와이프 이동이거나 롱프레스(텍스트 선택)인 경우 페이지 넘김 취소
+      if (dist > 15 || duration > 300) return;
+
+      // 이미 본문 텍스트가 블록 선택되어 있는 경우 취소
+      const sel = window.getSelection();
+      if (sel && sel.toString().trim().length > 0) return;
+
+      // 링크, 버튼, 입력 컨트롤, 수식 등 인터랙션 요소 클릭 시 페이지 넘김 취소
+      if (e.target.closest('button, a, input, select, textarea, .pager-btn, .doc-nav-btn, .katex')) {
+        return;
+      }
+
+      // 본문 프레임 중심선 기준 좌/우 분할 내비게이션
+      const frameRect = pageFrame.getBoundingClientRect();
+      const midX = frameRect.left + (frameRect.width / 2);
+
+      if (e.clientX < midX) {
+        prevPage();
+      } else {
+        nextPage();
+      }
+    });
 
     window.addEventListener('keydown', (e) => {
       if (isResumeModalOpen) {
