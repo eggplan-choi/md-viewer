@@ -70,6 +70,11 @@
     "file": "docs/0-B-real_analysis/0-B-5. 연속성은 무엇을 보존하는가.md"
   },
   {
+    "id": "0-B-6",
+    "title": "0-B-6. 변화율을 극한으로 붙잡다 — 미분계수와 도함수",
+    "file": "docs/0-B-real_analysis/0-B-6. 변화율을 극한으로 붙잡다 — 미분계수와 도함수.md"
+  },
+  {
     "id": "0-B",
     "title": "0-B. 실해석학 — 극한과 변화의 구조",
     "file": "docs/0-B-real_analysis/0-B. 실해석학 집필 계획.md"
